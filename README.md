@@ -8,7 +8,7 @@ This project considers example implementations and demonstrations for several as
 
 Topics might be (to be further defined)
 - Kinematic Bicycle Model (KBM)
-- Path following / Trajectory tracking control
+- Path following / Trajectory tracking control ✅
 - Frenet transformation of the KBM
 - Motion planning
 - Lateral/Longitudinal acceleration
