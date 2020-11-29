@@ -1,0 +1,38 @@
+<!doctype html>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://openrtdynamics.github.io/openrtdynamics.js"></script>
+
+
+<html>
+
+    <div id='simulator_gui_container_vehicle' class="wrap5">
+
+        <plot type="plotly" x="x x_r" y="y y_r"   title="x/y"         xlabel="x"         ylabel="y"     width="800" height="200"></plot>
+        <div class='parameter_editor'></div>
+        <plot type="plotly" x="time"  y="steering Delta_l__ steering_disturbance"     title="time series" xlabel="time [s]"  ylabel="value" width="400" height="200"></plot>
+
+    </div>
+
+    <script>
+
+        $(document).ready(function()  {
+
+            // load the simulator and its interface
+            folder = 'generated/path_following_control'
+
+            var files = { manifest : folder + '/simulation_manifest.json', wasm : folder + '/main.wasm', jscode : folder + '/main.js' }
+            var ret = openrtdynamics.loadCompiledSimulator(files);
+            simulator_gui_container = document.getElementById('simulator_gui_container_vehicle')
+            openrtdynamics.setup_simulation_gui_from_promises( simulator_gui_container, ret, {number_of_samples : 500, sampling_time : 0.01});
+        });
+
+    </script>
+
+    <link rel="stylesheet" href="css/input_gui.css">
+    <link rel="stylesheet" href="css/layout.css">
+
+    <script src="https://www.jsdelivr.com/package/npm/chart.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+</html>
