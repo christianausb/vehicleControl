@@ -33,7 +33,7 @@ def import_path_data(data):
 
     return path
 
-def discrete_time_bicycle_model(delta, v, wheelbase):
+def discrete_time_bicycle_model(delta, v, Ts, wheelbase, x0=0.0, y0=0.0, psi0=0.0):
     x   = dy.signal()
     y   = dy.signal()
     psi = dy.signal()
@@ -44,12 +44,35 @@ def discrete_time_bicycle_model(delta, v, wheelbase):
     psi_dot = v / dy.float64(wheelbase) * dy.sin( delta )
 
     # integrators
-    sampling_rate = 0.01
-    x    << dy.euler_integrator(x_dot,   sampling_rate, 0.0)
-    y    << dy.euler_integrator(y_dot,   sampling_rate, 0.0)
-    psi  << dy.euler_integrator(psi_dot, sampling_rate, 0.0)
+    x    << dy.euler_integrator(x_dot,   Ts, x0)
+    y    << dy.euler_integrator(y_dot,   Ts, y0)
+    psi  << dy.euler_integrator(psi_dot, Ts, psi0)
 
-    return x, y, psi
+    return x, y, psi, x_dot, y_dot, psi_dot
+
+
+def lateral_vehicle_model(u_delta, v, v_dot, Ts, wheelbase, x0=0.0, y0=0.0, psi0=0.0, delta0=0.0, delta_disturbance=None):
+
+    # add disturbance to steering
+    if delta_disturbance is not None:
+        delta_ = u_delta + delta_disturbance
+    else:
+        delta_ = u_delta 
+
+    # saturate steering
+    delta = dy.saturate(u=delta_, lower_limit=-math.pi/2.0, uppper_limit=math.pi/2.0)
+
+    # bicycle model
+    x, y, psi, x_dot, y_dot, psi_dot = discrete_time_bicycle_model(delta, v, Ts, wheelbase, x0, y0, psi0)
+
+    #
+    delta_dot = dy.diff( delta, initial_state=delta ) / dy.float64(Ts)
+    delta = dy.delay( delta, delta0 )
+
+    # compute acceleration in the point (x,y) espessed in the vehicle frame
+    a_lat, a_long = compute_accelearation( v, v_dot, delta, delta_dot, psi_dot )
+
+    return x, y, psi, delta, delta_dot, a_lat, a_long, x_dot, y_dot, psi_dot
 
 
 
@@ -299,6 +322,35 @@ def distance_to_Delta_l( distance, psi_r, x_r, y_r, x, y ):
     return Delta_l
 
 
+
+def compute_path_orientation_from_curvature( Ts : float, velocity, psi_rr, K_r, L ):
+    """
+        compute the noise-reduced path orientation Psi_r from curvature
+
+        Ts       - the sampling time
+        velocity - the driving velocity 
+        psi_rr   - noisy (e.g., due to sampling) path orientation
+        K_r      - path curvature
+        L        - gain for fusion using internal observer
+
+        returns 
+        
+        psi_r_reconst     - the noise-reduced path orientation
+        psi_r_reconst_dot - the time derivative
+    """
+
+    eps = dy.signal()
+
+    psi_r_reconst_dot = velocity * (K_r + eps)
+    psi_r_reconst = dy.euler_integrator( u=psi_r_reconst_dot, Ts=Ts, initial_state=psi_rr )
+
+    # observer to compensate for integration error
+    eps << (psi_rr - psi_r_reconst) * dy.float64(L)
+
+    return psi_r_reconst, psi_r_reconst_dot
+
+
+
 def compute_nominal_steering_from_curvature( Ts : float, l_r : float, v, K_r ):
     """
         compute the nominal steering angle and rate from given path heading and curvature
@@ -324,18 +376,29 @@ def compute_nominal_steering_from_path_heading( Ts : float, l_r : float, v, psi_
 
     return delta, psi, psi_dot
 
+
 def compute_accelearation( v, v_dot, delta, delta_dot, psi_dot ):
 
-    a_l = v_dot * dy.sin( delta ) + v * ( delta_dot + psi_dot ) * dy.cos( delta )
+    a_lat = v_dot * dy.sin( delta ) + v * ( delta_dot + psi_dot ) * dy.cos( delta )
+    a_long = None
 
-    return a_l
+    return a_lat, a_long
 
 def compute_steering_constraints( v, v_dot, psi_dot, delta, a_l_min, a_l_max ):
+    """
 
-    delta_lower_bound = ( a_l_max - v_dot * dy.sin(delta) ) / ( v * dy.cos(delta) ) - psi_dot
-    delta_upper_bound = ( a_l_min - v_dot * dy.sin(delta) ) / ( v * dy.cos(delta) ) - psi_dot
+        delta  - steering state of the vehicle (i.e., not the unsaturated control command)
+    """
 
-    return delta_lower_bound, delta_upper_bound
+
+    delta_min = dy.float64(-1.0)
+    delta_max = dy.float64(1.0)
+
+    # note: check this proper min/max
+    delta_dot_min = ( a_l_min - v_dot * dy.sin(delta) ) / ( v * dy.cos(delta) ) - psi_dot
+    delta_dot_max = ( a_l_max - v_dot * dy.sin(delta) ) / ( v * dy.cos(delta) ) - psi_dot
+
+    return delta_min, delta_max, delta_dot_min, delta_dot_max
 
 
 

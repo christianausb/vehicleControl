@@ -31,6 +31,9 @@ sample_disturbance     = dy.convert(dy.system_input( baseDatatype ).set_name('sa
 # parameters
 wheelbase = 3.0
 
+# sampling time
+Ts = 0.01
+
 # create storage for the reference path:
 path = import_path_data(track_data)
 
@@ -81,7 +84,7 @@ disturbed_steering = steering + steering_disturbance * disturbance_amplitude
 disturbed_steering = dy.saturate(u=disturbed_steering, lower_limit=-math.pi/2.0, uppper_limit=math.pi/2.0)
 
 # the model of the vehicle
-x_, y_, psi_ = discrete_time_bicycle_model(disturbed_steering, velocity, wheelbase)
+x_, y_, psi_, x_dot, y_dot, psi_dot = discrete_time_bicycle_model(disturbed_steering, velocity, Ts, wheelbase)
 
 # close the feedback loops
 x << x_
