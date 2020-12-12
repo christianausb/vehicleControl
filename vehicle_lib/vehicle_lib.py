@@ -376,6 +376,12 @@ def compute_nominal_steering_from_path_heading( Ts : float, l_r : float, v, psi_
 
     return delta, psi, psi_dot
 
+def project_velocity_on_path(velocity, Delta_u, Delta_l, K_r):
+
+    # v_star = d d_star / dt = v * cos( Delta_u ) / ( 1 - Delta_l * K(d_star) ) 
+    v_star = velocity * dy.cos( Delta_u ) / ( dy.float64(1) - Delta_l * K_r ) 
+
+    return v_star
 
 def compute_accelearation( v, v_dot, delta, delta_dot, psi_dot ):
 

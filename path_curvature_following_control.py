@@ -52,11 +52,12 @@ Delta_l = distance_to_Delta_l( closest_distance, psi_rr, x_r, y_r, x, y )
 #
 # project the vehicle velocity onto the path yielding v_star 
 #
-
-# v_star = d d_star / dt = v * cos( Delta_u ) / ( 1 - Delta_l * K(d_star) ) 
+# Used formula inside project_velocity_on_path:
+#   v_star = d d_star / dt = v * cos( Delta_u ) / ( 1 - Delta_l * K(d_star) ) 
+#
 
 Delta_u = dy.signal() # feedback from control
-v_star = velocity * dy.cos( Delta_u ) / ( dy.float64(1) - Delta_l * K_r ) 
+v_star = project_velocity_on_path(velocity, Delta_u, Delta_l, K_r)
 
 dy.append_primay_ouput(v_star,     'v_star')
 
