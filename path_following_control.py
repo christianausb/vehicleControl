@@ -20,13 +20,11 @@ with open("track_data/simple_track.json", "r") as read_file:
 #
 
 system = dy.enter_system()
-baseDatatype = dy.DataTypeFloat64(1) 
 
-# define simulation inputs
-velocity               = dy.system_input( baseDatatype ).set_name('velocity').set_properties({ "range" : [0, 25], "unit" : "m/s", "default_value" : 23.75, "title" : "vehicle velocity" })
-k_p                    = dy.system_input( baseDatatype ).set_name('k_p').set_properties({ "range" : [0, 10.0], "default_value" : 2, "title" : "controller gain" })
-disturbance_amplitude  = dy.system_input( baseDatatype ).set_name('disturbance_amplitude').set_properties({ "range" : [-45, 45], "unit" : "degrees", "default_value" : 20.0, "title" : "disturbance amplitude" })     * dy.float64(math.pi / 180.0)
-sample_disturbance     = dy.convert(dy.system_input( baseDatatype ).set_name('sample_disturbance').set_properties({ "range" : [0, 300], "unit" : "samples", "default_value" : 50, "title" : "disturbance position" }), target_type=dy.DataTypeInt32(1) )
+velocity               = dy.system_input( dy.DataTypeFloat64(1), name='velocity',              default_value=23.75,  value_range=[0, 25],   title="vehicle velocity")
+k_p                    = dy.system_input( dy.DataTypeFloat64(1), name='k_p',                   default_value=2.0,    value_range=[0, 10.0], title="controller gain")
+disturbance_amplitude  = dy.system_input( dy.DataTypeFloat64(1), name='disturbance_amplitude', default_value=20.0,   value_range=[-45, 45], title="disturbance amplitude") * dy.float64(math.pi / 180.0)
+sample_disturbance     = dy.system_input( dy.DataTypeInt32(1),   name='sample_disturbance',    default_value=50,     value_range=[0, 300],  title="disturbance position")
 
 # parameters
 wheelbase = 3.0
@@ -57,16 +55,15 @@ Delta_l_r = dy.float64(0.0) # zero in this example
 dy.append_primay_ouput(Delta_l_r, 'Delta_l_r')
 
 # feedback control
-l_dot_r = dy.PID_controller(r=Delta_l_r, y=Delta_l, Ts=0.01, kp=k_p, ki = dy.float64(0.0), kd = dy.float64(0.0))
+u = dy.PID_controller(r=Delta_l_r, y=Delta_l, Ts=0.01, kp=k_p)
 
 # path tracking
 # resulting lateral model u --> Delta_l : 1/s
-Delta_u = dy.asin( dy.saturate(l_dot_r / velocity, -0.99, 0.99) )
+Delta_u = dy.asin( dy.saturate(u / velocity, -0.99, 0.99) )
 steering =  psi_r - psi + Delta_u
 steering = dy.unwrap_angle(angle=steering, normalize_around_zero = True)
 
 dy.append_primay_ouput(Delta_u, 'Delta_u')
-dy.append_primay_ouput(l_dot_r, 'l_dot_r')
 
 
 #
