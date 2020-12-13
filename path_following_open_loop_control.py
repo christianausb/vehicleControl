@@ -21,9 +21,10 @@ with open("track_data/simple_track.json", "r") as read_file:
 
 system = dy.enter_system()
 
-velocity               = dy.system_input( dy.DataTypeFloat64(1), name='velocity',              default_value=23.75,  value_range=[0, 25],   title="vehicle velocity")
-disturbance_amplitude  = dy.system_input( dy.DataTypeFloat64(1), name='disturbance_amplitude', default_value=20.0,   value_range=[-45, 45], title="disturbance amplitude") * dy.float64(math.pi / 180.0)
-sample_disturbance     = dy.system_input( dy.DataTypeInt32(1),   name='sample_disturbance',    default_value=50,     value_range=[0, 300],  title="disturbance position")
+velocity               = dy.system_input( dy.DataTypeFloat64(1), name='velocity',              default_value=11.0,   value_range=[0, 25],   title="vehicle velocity")
+disturbance_amplitude  = dy.system_input( dy.DataTypeFloat64(1), name='disturbance_amplitude', default_value=-0.7,   value_range=[-4, 4], title="disturbance amplitude") * dy.float64(math.pi / 180.0)
+delta_factor           = dy.system_input( dy.DataTypeFloat64(1), name='delta_factor',          default_value=1.1,    value_range=[0.8, 1.2], title="steering factor")
+activate_IMU           = dy.system_input( dy.DataTypeBoolean(1), name='activate_IMU',          default_value=0,      value_range=[0, 1], title="activate IMU")
 
 # parameters
 wheelbase = 3.0
@@ -35,21 +36,28 @@ Ts = 0.01
 path = import_path_data(track_data)
 
 # create placeholders for the plant output signals
-x   = dy.signal()
-y   = dy.signal()
-psi = dy.signal()
+x_real   = dy.signal()
+y_real   = dy.signal()
+psi_real = dy.signal()
 
 #
 # track the evolution of the closest point on the path to the vehicles position
 # note: this is only used to initialize the open-loop control with the currect vehicle position on the path
 #
-d_star, x_r, y_r, psi_r, K_r, Delta_l, tracked_index, Delta_index = track_projection_on_path(path, x, y)
+d_star, x_r, y_r, psi_r, K_r, Delta_l, tracked_index, Delta_index = track_projection_on_path(path, x_real, y_real)
 
 path_index_start_open_loop_control = dy.sample_and_hold(tracked_index, event=dy.initial_event())
 path_distance_start_open_loop_control = dy.sample_and_hold(d_star, event=dy.initial_event())
 
 dy.append_primay_ouput(path_index_start_open_loop_control,    'path_index_start_open_loop_control')
+dy.append_primay_ouput(Delta_l, 'Delta_l')
 
+
+
+
+#
+# open-loop control
+#
 
 # estimate the travelled distance by integration of the vehicle velocity
 d_hat = dy.euler_integrator(velocity, Ts, initial_state=0) + path_distance_start_open_loop_control
@@ -59,8 +67,7 @@ open_loop_index, _, _ = tracker_distance_ahead(path, current_index=path_index_st
 
 dy.append_primay_ouput(open_loop_index,    'open_loop_index')
 
-
-# get the reference
+# get the reference orientation and curvature
 _, _, _, psi_rr, K_r = sample_path(path, index=open_loop_index + dy.int32(1) )  # new sampling
 
 #
@@ -73,35 +80,42 @@ psi_r, psi_r_dot = compute_path_orientation_from_curvature( Ts, velocity, psi_rr
 dy.append_primay_ouput(psi_rr,    'psi_rr')
 dy.append_primay_ouput(psi_r_dot, 'psi_r_dot')
 
+
+# feedback of internal model
+psi_mdl = dy.signal()
+
+# switch between IMU feedback and internal model
+psi_feedback = psi_mdl
+psi_feedback = dy.conditional_overwrite( psi_feedback, activate_IMU, psi_real )
+
 # path tracking
 Delta_u = dy.float64(0.0)
-steering =  psi_r - psi + Delta_u
+steering =  psi_r - psi_feedback + Delta_u
 steering = dy.unwrap_angle(angle=steering, normalize_around_zero = True)
 
 dy.append_primay_ouput(Delta_u, 'Delta_u')
+
+# internal model of carbody rotation (from bicycle model)
+psi_mdl << dy.euler_integrator( velocity * dy.float64(1.0 / wheelbase) * dy.sin(steering), Ts, initial_state=psi_real )
+dy.append_primay_ouput(psi_mdl, 'psi_mdl')
+
+
 
 
 #
 # The model of the vehicle including a disturbance
 #
 
-# model the disturbance
-disturbance_transient = np.concatenate(( cosra(50, 0, 1.0), co(10, 1.0), cosra(50, 1.0, 0) ))
-steering_disturbance, i = dy.play(disturbance_transient, start_trigger=dy.counter() == sample_disturbance, auto_start=False)
-
-# apply disturbance to the steering input
-disturbed_steering = steering + steering_disturbance * disturbance_amplitude
-
-# steering angle limit
-disturbed_steering = dy.saturate(u=disturbed_steering, lower_limit=-math.pi/2.0, uppper_limit=math.pi/2.0)
-
 # the model of the vehicle
-x_, y_, psi_, x_dot, y_dot, psi_dot = discrete_time_bicycle_model(disturbed_steering, velocity, Ts, wheelbase)
+x_, y_, psi_, *_ = lateral_vehicle_model(u_delta=steering, v=velocity, v_dot=dy.float64(0), 
+                                        Ts=Ts, wheelbase=wheelbase,  
+                                        delta_disturbance=disturbance_amplitude, 
+                                        delta_factor=delta_factor)
 
 # close the feedback loops
-x << x_
-y << y_
-psi << psi_
+x_real << x_
+y_real << y_
+psi_real << psi_
 
 
 
@@ -109,9 +123,9 @@ psi << psi_
 # outputs: these are available for visualization in the html set-up
 #
 
-dy.append_primay_ouput(x, 'x')
-dy.append_primay_ouput(y, 'y')
-dy.append_primay_ouput(psi, 'psi')
+dy.append_primay_ouput(x_real, 'x')
+dy.append_primay_ouput(y_real, 'y')
+dy.append_primay_ouput(psi_real, 'psi')
 
 dy.append_primay_ouput(steering, 'steering')
 
@@ -119,9 +133,6 @@ dy.append_primay_ouput(x_r, 'x_r')
 dy.append_primay_ouput(y_r, 'y_r')
 dy.append_primay_ouput(psi_r, 'psi_r')
 
-
-dy.append_primay_ouput(steering_disturbance, 'steering_disturbance')
-dy.append_primay_ouput(disturbed_steering, 'disturbed_steering')
 
 dy.append_primay_ouput(tracked_index, 'tracked_index')
 

@@ -51,13 +51,17 @@ def discrete_time_bicycle_model(delta, v, Ts, wheelbase, x0=0.0, y0=0.0, psi0=0.
     return x, y, psi, x_dot, y_dot, psi_dot
 
 
-def lateral_vehicle_model(u_delta, v, v_dot, Ts, wheelbase, x0=0.0, y0=0.0, psi0=0.0, delta0=0.0, delta_disturbance=None):
+def lateral_vehicle_model(u_delta, v, v_dot, Ts, wheelbase, x0=0.0, y0=0.0, psi0=0.0, delta0=0.0, delta_disturbance=None, delta_factor=None):
+
+    # add malicious factor to steering
+    if delta_factor is not None:
+        delta_ = u_delta * delta_factor
+    else:
+        delta_ = u_delta 
 
     # add disturbance to steering
     if delta_disturbance is not None:
-        delta_ = u_delta + delta_disturbance
-    else:
-        delta_ = u_delta 
+        delta_ = delta_ + delta_disturbance
 
     # saturate steering
     delta = dy.saturate(u=delta_, lower_limit=-math.pi/2.0, uppper_limit=math.pi/2.0)
