@@ -39,23 +39,29 @@ x   = dy.signal()
 y   = dy.signal()
 psi = dy.signal()
 
+#
 # track the evolution of the closest point on the path to the vehicles position
+# note: this is only used to initialize the open-loop control with the currect vehicle position on the path
+#
 d_star, x_r, y_r, psi_r, K_r, Delta_l, tracked_index, Delta_index = track_projection_on_path(path, x, y)
 
+path_index_start_open_loop_control = dy.sample_and_hold(tracked_index, event=dy.initial_event())
+path_distance_start_open_loop_control = dy.sample_and_hold(d_star, event=dy.initial_event())
+
+dy.append_primay_ouput(path_index_start_open_loop_control,    'path_index_start_open_loop_control')
 
 
+# estimate the travelled distance by integration of the vehicle velocity
+d_hat = dy.euler_integrator(velocity, Ts, initial_state=0) + path_distance_start_open_loop_control
 
-#
-d_hat = dy.euler_integrator(velocity, Ts, initial_state=0)
+# estimated travelled distance (d_hat) to path-index 
+open_loop_index, _, _ = tracker_distance_ahead(path, current_index=path_index_start_open_loop_control, distance_ahead=d_hat)
 
-# track the evolution of the closest point on the path to the vehicles position
-#tracked_index, Delta_index, closest_distance = tracker(path, x, y)
-
-tracked_index, _, _ = tracker_distance_ahead(path, current_index=dy.int32(1), distance_ahead=d_hat)
+dy.append_primay_ouput(open_loop_index,    'open_loop_index')
 
 
 # get the reference
-_, _, _, psi_rr, K_r = sample_path(path, index=tracked_index + dy.int32(1) )  # new sampling
+_, _, _, psi_rr, K_r = sample_path(path, index=open_loop_index + dy.int32(1) )  # new sampling
 
 #
 # compute an enhanced (less noise) signal for the path orientation psi_r by integrating the 
