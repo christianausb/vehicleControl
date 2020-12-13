@@ -85,6 +85,16 @@ def distance_between( x1, y1, x2, y2 ):
 
 
 def tracker(path, x, y):
+    """
+        Continously project the point (x, y) onto the given path (closest distance)
+
+        This is an internal function. C.f. track_projection_on_path for details and assumptions.
+
+        returns
+            index_track_next - the index in the path array for the closest distance to (x, y)
+            Delta_index      - the change of the index to the previous lookup
+            distance         - the absolute value of the closest distance of (x, y) to the path
+    """
     index_track   = dy.signal()
 
     with dy.sub_loop( max_iterations=1000 ) as system:
@@ -121,6 +131,41 @@ def tracker(path, x, y):
     index_track << dy.delay(index_track_next, initial_state=1)
 
     return index_track_next, Delta_index, distance
+
+
+def track_projection_on_path(path, x, y):
+    """
+        Project the point (x, y) onto the given path (closest distance) yielding the parameter d_star.
+        Return the properties of the path at d_star. Dynamic changes in (x, y) are continuously tracked.
+
+        Assumption: special assumtions on the evolultion of (x, y) are requied:
+        .) not leaving the a distance to the path of more than the curve radius at the closest distance.
+        .) the projection-parameter d_star is assumed to increase over time. (I.e. in case (x,y) describes
+           a vehicle, the velocity shall be positive and the direction of driving aligned to the 
+           path +- 90 degrees)
+
+        The implementation internally uses the function tracker() to perform an optimzed tracking.
+
+        returns
+
+        d_star        - the optimal path parameter (distance along the path)
+        x_r, y_r      - the coordinates of the path at d_star
+        psi_rr, K_r   - the path orientation and curvature of the path at d_star
+        Delta_l       - the clostest distance to the path (signed) 
+        tracked_index - the index in the path array for the closest distance to (x, y)
+        Delta_index   - the change of the index to the previous lookup
+    """
+
+    # track the evolution of the closest point on the path to the vehicles position
+    tracked_index, Delta_index, closest_distance = tracker(path, x, y)
+
+    # get the reference
+    d_star, x_r, y_r, psi_rr, K_r = sample_path(path, index=tracked_index + dy.int32(1) )
+
+    # add sign information to the distance
+    Delta_l = distance_to_Delta_l( closest_distance, psi_rr, x_r, y_r, x, y )
+  
+    return d_star, x_r, y_r, psi_rr, K_r, Delta_l, tracked_index, Delta_index
 
 
 
@@ -283,12 +328,13 @@ def global_lookup_distance_index( path_distance_storage, path_x_storage, path_y_
 
 def sample_path(path, index):
 
-    y_r   = dy.memory_read( memory=path['Y'], index=index ) 
-    x_r   = dy.memory_read( memory=path['X'], index=index ) 
-    psi_r = dy.memory_read( memory=path['PSI'], index=index )
-    K_r   = dy.memory_read( memory=path['K'], index=index )
+    d   = dy.memory_read( memory=path['D'], index=index ) 
+    y   = dy.memory_read( memory=path['Y'], index=index ) 
+    x   = dy.memory_read( memory=path['X'], index=index ) 
+    psi = dy.memory_read( memory=path['PSI'], index=index )
+    K   = dy.memory_read( memory=path['K'], index=index )
 
-    return x_r, y_r, psi_r, K_r
+    return d, x, y, psi, K
 
 
 

@@ -41,13 +41,7 @@ y   = dy.signal()
 psi = dy.signal()
 
 # track the evolution of the closest point on the path to the vehicles position
-tracked_index, Delta_index, closest_distance = tracker(path, x, y)
-
-# get the reference
-x_r, y_r, psi_r, K_r = sample_path(path, index=tracked_index + dy.int32(1) )  # new sampling
-
-# add sign information to the distance
-Delta_l = distance_to_Delta_l( closest_distance, psi_r, x_r, y_r, x, y )
+d_star, x_r, y_r, psi_r, K_r, Delta_l, tracked_index, Delta_index = track_projection_on_path(path, x, y)
 
 # reference for the lateral distance
 Delta_l_r = dy.float64(0.0) # zero in this example

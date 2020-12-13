@@ -39,6 +39,12 @@ x   = dy.signal()
 y   = dy.signal()
 psi = dy.signal()
 
+# track the evolution of the closest point on the path to the vehicles position
+d_star, x_r, y_r, psi_r, K_r, Delta_l, tracked_index, Delta_index = track_projection_on_path(path, x, y)
+
+
+
+
 #
 d_hat = dy.euler_integrator(velocity, Ts, initial_state=0)
 
@@ -49,7 +55,7 @@ tracked_index, _, _ = tracker_distance_ahead(path, current_index=dy.int32(1), di
 
 
 # get the reference
-x_r, y_r, psi_rr, K_r = sample_path(path, index=tracked_index + dy.int32(1) )  # new sampling
+_, _, _, psi_rr, K_r = sample_path(path, index=tracked_index + dy.int32(1) )  # new sampling
 
 #
 # compute an enhanced (less noise) signal for the path orientation psi_r by integrating the 
