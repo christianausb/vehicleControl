@@ -21,11 +21,13 @@ with open("track_data/simple_track.json", "r") as read_file:
 
 system = dy.enter_system()
 
-initial_velocity       = dy.system_input( dy.DataTypeFloat64(1), name='velocity',              default_value=11.0,   value_range=[0, 25],    title="initial vehicle velocity")
-acceleration           = dy.system_input( dy.DataTypeFloat64(1), name='acceleration',          default_value=-2.5,   value_range=[-8, 0],    title="vehicle acceleration")
-disturbance_amplitude  = dy.system_input( dy.DataTypeFloat64(1), name='disturbance_amplitude', default_value=-0.7,   value_range=[-4, 4],    title="disturbance amplitude") * dy.float64(math.pi / 180.0)
-delta_factor           = dy.system_input( dy.DataTypeFloat64(1), name='delta_factor',          default_value=1.1,    value_range=[0.8, 1.2], title="steering factor")
-activate_IMU           = dy.system_input( dy.DataTypeBoolean(1), name='activate_IMU',          default_value=0,      value_range=[0, 1],     title="activate IMU")
+initial_velocity       = dy.system_input( dy.DataTypeFloat64(1), name='velocity',              default_value=11.0,   value_range=[0, 25],     title="initial condition: vehicle velocity")
+acceleration           = dy.system_input( dy.DataTypeFloat64(1), name='acceleration',          default_value=-2.5,   value_range=[-8, 0],     title="initial condition: vehicle acceleration")
+disturbance_ofs        = dy.system_input( dy.DataTypeFloat64(1), name='disturbance_ofs',       default_value=-0.7,   value_range=[-4, 4],     title="disturbance: steering offset") * dy.float64(math.pi / 180.0)
+delta_factor           = dy.system_input( dy.DataTypeFloat64(1), name='delta_factor',          default_value=1.1,    value_range=[0.8, 1.2],  title="disturbance: steering factor")
+velocity_factor        = dy.system_input( dy.DataTypeFloat64(1), name='velocity_factor',       default_value=1.0,    value_range=[0.8, 1.2],  title="disturbance: velocity factor")
+IMU_drift              = dy.system_input( dy.DataTypeFloat64(1), name='IMU_drift',             default_value=0.0,    value_range=[-0.5, 0.5], title="disturbance: drift of orientation angle [degrees/s]") * dy.float64(math.pi / 180.0)
+activate_IMU           = dy.system_input( dy.DataTypeBoolean(1), name='activate_IMU',          default_value=0,      value_range=[0, 1],      title="mode: activate IMU")
 
 # parameters
 wheelbase = 3.0
@@ -39,7 +41,7 @@ path = import_path_data(track_data)
 # create placeholders for the plant output signals
 x_real   = dy.signal()
 y_real   = dy.signal()
-psi_real = dy.signal()
+psi_measurement = dy.signal()
 
 #
 # track the evolution of the closest point on the path to the vehicles position
@@ -58,7 +60,7 @@ dy.append_primay_ouput(Delta_l, 'Delta_l')
 # model vehicle braking
 #
 
-velocity = dy.euler_integrator(acceleration, Ts, initial_state=initial_velocity)
+velocity = dy.euler_integrator(acceleration, Ts, initial_state=initial_velocity) * velocity_factor
 velocity = dy.saturate(velocity, lower_limit=0)
 
 #
@@ -92,7 +94,7 @@ psi_mdl = dy.signal()
 
 # switch between IMU feedback and internal model
 psi_feedback = psi_mdl
-psi_feedback = dy.conditional_overwrite( psi_feedback, activate_IMU, psi_real )
+psi_feedback = dy.conditional_overwrite( psi_feedback, activate_IMU, psi_measurement )
 
 # path tracking
 Delta_u = dy.float64(0.0)
@@ -102,7 +104,7 @@ steering = dy.unwrap_angle(angle=steering, normalize_around_zero = True)
 dy.append_primay_ouput(Delta_u, 'Delta_u')
 
 # internal model of carbody rotation (from bicycle model)
-psi_mdl << dy.euler_integrator( velocity * dy.float64(1.0 / wheelbase) * dy.sin(steering), Ts, initial_state=psi_real )
+psi_mdl << dy.euler_integrator( velocity * dy.float64(1.0 / wheelbase) * dy.sin(steering), Ts, initial_state=psi_measurement )
 dy.append_primay_ouput(psi_mdl, 'psi_mdl')
 
 
@@ -113,17 +115,24 @@ dy.append_primay_ouput(psi_mdl, 'psi_mdl')
 #
 
 # the model of the vehicle
-x_, y_, psi_, *_ = lateral_vehicle_model(u_delta=steering, v=velocity, v_dot=dy.float64(0), 
+x_, y_, psi_real, *_ = lateral_vehicle_model(u_delta=steering, v=velocity, v_dot=dy.float64(0), 
                                         Ts=Ts, wheelbase=wheelbase,  
-                                        delta_disturbance=disturbance_amplitude, 
+                                        delta_disturbance=disturbance_ofs, 
                                         delta_factor=delta_factor)
+
+#
+# error model of orientation angle sensing
+#
+
+psi_ofs = dy.euler_integrator(IMU_drift, Ts, initial_state=0)
+psi_measurement_ = psi_real + psi_ofs
+
+dy.append_primay_ouput(psi_measurement_, 'psi_measurement')
 
 # close the feedback loops
 x_real << x_
 y_real << y_
-psi_real << psi_
-
-
+psi_measurement << psi_measurement_
 
 #
 # outputs: these are available for visualization in the html set-up
@@ -131,7 +140,7 @@ psi_real << psi_
 
 dy.append_primay_ouput(x_real, 'x')
 dy.append_primay_ouput(y_real, 'y')
-dy.append_primay_ouput(psi_real, 'psi')
+dy.append_primay_ouput(psi_real, 'psi_real')
 
 dy.append_primay_ouput(steering, 'steering')
 
