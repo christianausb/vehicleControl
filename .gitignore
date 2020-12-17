@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# my
+.DS_Store
+*.wasm.map
+*.wast
+openrtdynamics2
