@@ -21,10 +21,11 @@ with open("track_data/simple_track.json", "r") as read_file:
 
 system = dy.enter_system()
 
-velocity               = dy.system_input( dy.DataTypeFloat64(1), name='velocity',              default_value=11.0,   value_range=[0, 25],   title="vehicle velocity")
-disturbance_amplitude  = dy.system_input( dy.DataTypeFloat64(1), name='disturbance_amplitude', default_value=-0.7,   value_range=[-4, 4], title="disturbance amplitude") * dy.float64(math.pi / 180.0)
+initial_velocity       = dy.system_input( dy.DataTypeFloat64(1), name='velocity',              default_value=11.0,   value_range=[0, 25],    title="initial vehicle velocity")
+acceleration           = dy.system_input( dy.DataTypeFloat64(1), name='acceleration',          default_value=-2.5,   value_range=[-8, 0],    title="vehicle acceleration")
+disturbance_amplitude  = dy.system_input( dy.DataTypeFloat64(1), name='disturbance_amplitude', default_value=-0.7,   value_range=[-4, 4],    title="disturbance amplitude") * dy.float64(math.pi / 180.0)
 delta_factor           = dy.system_input( dy.DataTypeFloat64(1), name='delta_factor',          default_value=1.1,    value_range=[0.8, 1.2], title="steering factor")
-activate_IMU           = dy.system_input( dy.DataTypeBoolean(1), name='activate_IMU',          default_value=0,      value_range=[0, 1], title="activate IMU")
+activate_IMU           = dy.system_input( dy.DataTypeBoolean(1), name='activate_IMU',          default_value=0,      value_range=[0, 1],     title="activate IMU")
 
 # parameters
 wheelbase = 3.0
@@ -53,7 +54,12 @@ dy.append_primay_ouput(path_index_start_open_loop_control,    'path_index_start_
 dy.append_primay_ouput(Delta_l, 'Delta_l')
 
 
+#
+# model vehicle braking
+#
 
+velocity = dy.euler_integrator(acceleration, Ts, initial_state=initial_velocity)
+velocity = dy.saturate(velocity, lower_limit=0)
 
 #
 # open-loop control
