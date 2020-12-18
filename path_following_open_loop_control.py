@@ -21,7 +21,7 @@ with open("track_data/simple_track.json", "r") as read_file:
 
 system = dy.enter_system()
 
-initial_velocity       = dy.system_input( dy.DataTypeFloat64(1), name='velocity',              default_value=11.0,   value_range=[0, 25],     title="initial condition: vehicle velocity")
+initial_velocity       = dy.system_input( dy.DataTypeFloat64(1), name='initial_velocity',      default_value=11.0,   value_range=[0, 25],     title="initial condition: vehicle velocity")
 acceleration           = dy.system_input( dy.DataTypeFloat64(1), name='acceleration',          default_value=-2.5,   value_range=[-8, 0],     title="initial condition: vehicle acceleration")
 disturbance_ofs        = dy.system_input( dy.DataTypeFloat64(1), name='disturbance_ofs',       default_value=-0.7,   value_range=[-4, 4],     title="disturbance: steering offset") * dy.float64(math.pi / 180.0)
 delta_factor           = dy.system_input( dy.DataTypeFloat64(1), name='delta_factor',          default_value=1.1,    value_range=[0.8, 1.2],  title="disturbance: steering factor")
@@ -62,6 +62,8 @@ dy.append_primay_ouput(Delta_l, 'Delta_l')
 
 velocity = dy.euler_integrator(acceleration, Ts, initial_state=initial_velocity) * velocity_factor
 velocity = dy.saturate(velocity, lower_limit=0)
+
+dy.append_primay_ouput(velocity, 'velocity')
 
 #
 # open-loop control
