@@ -7,14 +7,22 @@ Tutorial on: Vehicle path following and control
 This project considers example implementations and demonstrations for several aspects of car-like vehicle control, e.g., for autonomous driving purposes. The examples are implmented using model-based programming in python. 
 
 Topics might be (to be further defined)
-- Kinematic Bicycle Model (KBM) ✅ [path-following control](https://christianausb.github.io/vehicleControl/bicycle_model.html) 
+
+- Kinematic Bicycle Model (KBM) ✅ [bicycle-model](https://christianausb.github.io/vehicleControl/bicycle_model.html) 
+
+- Lateral/Longitudinal acceleration
+
 - Path following (basic)  ✅ [path-following control](https://christianausb.github.io/vehicleControl/path_following_control.html) 
-- Path following (improved with curvature profile) ✅ [path-curvature-following control](https://christianausb.github.io/vehicleControl/path_curvature_following_control.html) 
+
+- Path following (improved with curvature profile) ✅ [path-following control (curvature-based)](https://christianausb.github.io/vehicleControl/path_curvature_following_control.html) 
+
+- Lateral dynamics ✅ [lateral dynamics](https://christianausb.github.io/vehicleControl/path_following_lateral_dynamics.html) 
+
 - Path following (open-loop) ✅ [path-following open-loop control](https://christianausb.github.io/vehicleControl/path_following_open_loop_control.html) 
+
 - Trajectory tracking control
 - Frenet transformation of the KBM
 - Motion planning
-- Lateral/Longitudinal acceleration
 - Safety Functions
 - Trailers
 
