@@ -7,7 +7,7 @@ echo "----------- installing jupyter extension ----------"
 pip install jupyter-server-proxy
 
 echo "----------- installing jupyter extension (2) ----------"
-jupyter labextension install jupyterlab-server-proxy
+#jupyter labextension install jupyterlab-server-proxy
 
 echo "----------- installing jupyter extension (3) ----------"
 # jupyter serverextension enable --sys-prefix jupyter_server_proxy
