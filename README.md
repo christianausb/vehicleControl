@@ -1,5 +1,7 @@
 # A tutorial on vehicle control
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/christianausb/vehicleControl/HEAD)
+
 -- upcoming --
 
 Tutorial on: Vehicle path following and control
