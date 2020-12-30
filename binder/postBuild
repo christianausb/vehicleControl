@@ -1,13 +1,17 @@
 #!/bin/bash
 set -e
 
+cd ~
+
 pip install jupyter-server-proxy
+jupyter serverextension enable --sys-prefix jupyter_server_proxy
 
 # python setup.py install
+
+echo "----------- installing jupyter extension ----------"
 pip install .
 
 
-cd ~
 git clone https://github.com/emscripten-core/emsdk.git
 cd emsdk
 ./emsdk install latest
