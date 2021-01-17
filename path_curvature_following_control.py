@@ -132,7 +132,7 @@ dy.append_primay_ouput(Delta_index, 'Delta_index')
 
 
 # generate code for Web Assembly (wasm), requires emcc (emscripten) to build
-sourcecode, manifest = dy.generate_code(template=dy.WasmRuntime(enable_tracing=False), folder="generated/path_curvature_following_control", build=True)
+code_gen_results = dy.generate_code(template=dy.WasmRuntime(enable_tracing=False), folder="generated/path_curvature_following_control", build=True)
 
 #
 dy.clear()

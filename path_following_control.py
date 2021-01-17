@@ -54,10 +54,12 @@ u = dy.PID_controller(r=Delta_l_r, y=Delta_l, Ts=0.01, kp=k_p)
 # path tracking
 # resulting lateral model u --> Delta_l : 1/s
 Delta_u = dy.asin( dy.saturate(u / velocity, -0.99, 0.99) )
-steering =  psi_r - psi + Delta_u
+delta_star = psi_r - psi
+steering =  delta_star + Delta_u
 steering = dy.unwrap_angle(angle=steering, normalize_around_zero = True)
 
 dy.append_primay_ouput(Delta_u, 'Delta_u')
+dy.append_primay_ouput(delta_star, 'delta_star')
 
 
 #
@@ -108,7 +110,7 @@ dy.append_primay_ouput(Delta_index, 'Delta_index')
 
 
 # generate code for Web Assembly (wasm), requires emcc (emscripten) to build
-sourcecode, manifest = dy.generate_code(template=dy.WasmRuntime(enable_tracing=False), folder="generated/path_following_control", build=True)
+code_gen_results = dy.generate_code(template=dy.WasmRuntime(enable_tracing=False), folder="generated/path_following_control", build=True)
 
 #
 dy.clear()

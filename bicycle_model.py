@@ -53,7 +53,7 @@ dy.append_primay_ouput(psi, 'psi')
 dy.append_primay_ouput(delta, 'steering')
 
 # generate code for Web Assembly (wasm), requires emcc (emscripten) to build
-sourcecode, manifest = dy.generate_code(template=dy.WasmRuntime(enable_tracing=False), folder="generated/bicycle_model", build=True)
+code_gen_results = dy.generate_code(template=dy.WasmRuntime(enable_tracing=False), folder="generated/bicycle_model", build=True)
 
 #
 dy.clear()
