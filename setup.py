@@ -26,7 +26,7 @@ setuptools.setup(
       ]
     },
     install_requires=[
-        'numpy', 'control', 'openrtdynamics2', 'jupyter-server-proxy'
+        'numpy', 'control', 'openrtdynamics2', 'jupyter-server-proxy', 'sympy'
     ],
     python_requires='>=3.6',
 )
