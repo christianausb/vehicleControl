@@ -74,7 +74,7 @@ steering_disturbance, i = dy.play(disturbance_transient, start_trigger=dy.counte
 disturbed_steering = steering + steering_disturbance * disturbance_amplitude
 
 # steering angle limit
-disturbed_steering = dy.saturate(u=disturbed_steering, lower_limit=-math.pi/2.0, uppper_limit=math.pi/2.0)
+disturbed_steering = dy.saturate(u=disturbed_steering, lower_limit=-math.pi/2.0, upper_limit=math.pi/2.0)
 
 # the model of the vehicle
 x_, y_, psi_, x_dot, y_dot, psi_dot = discrete_time_bicycle_model(disturbed_steering, velocity, Ts, wheelbase)
@@ -110,7 +110,7 @@ dy.append_primay_ouput(Delta_index, 'Delta_index')
 
 
 # generate code for Web Assembly (wasm), requires emcc (emscripten) to build
-code_gen_results = dy.generate_code(template=dy.WasmRuntime(enable_tracing=False), folder="generated/path_following_control", build=True)
+code_gen_results = dy.generate_code(template=dy.TargetWasm(enable_tracing=False), folder="generated/path_following_control", build=True)
 
 #
 dy.clear()

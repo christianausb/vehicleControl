@@ -155,7 +155,7 @@ dy.append_primay_ouput(tracked_index, 'tracked_index')
 
 
 # generate code for Web Assembly (wasm), requires emcc (emscripten) to build
-code_gen_results = dy.generate_code(template=dy.WasmRuntime(enable_tracing=False), folder="generated/path_following_open_loop_control", build=True)
+code_gen_results = dy.generate_code(template=dy.TargetWasm(enable_tracing=False), folder="generated/path_following_open_loop_control", build=True)
 
 #
 dy.clear()

@@ -121,7 +121,7 @@ dy.append_primay_ouput(delta_star, 'delta_star')
 
 
 # steering angle limit
-delta = dy.saturate(u=delta, lower_limit=-math.pi/2.0, uppper_limit=math.pi/2.0)
+delta = dy.saturate(u=delta, lower_limit=-math.pi/2.0, upper_limit=math.pi/2.0)
 
 # the model of the vehicle
 x_, y_, psi_, x_dot, y_dot, psi_dot = discrete_time_bicycle_model(delta, velocity, Ts, wheelbase)
@@ -153,7 +153,7 @@ dy.append_primay_ouput(Delta_l, 'Delta_l')
 
 
 # generate code for Web Assembly (wasm), requires emcc (emscripten) to build
-code_gen_results = dy.generate_code(template=dy.WasmRuntime(enable_tracing=False), folder="generated/path_following_lateral_dynamics", build=True)
+code_gen_results = dy.generate_code(template=dy.TargetWasm(enable_tracing=False), folder="generated/path_following_lateral_dynamics", build=True)
 
 #
 dy.clear()
