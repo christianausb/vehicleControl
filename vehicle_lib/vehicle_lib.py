@@ -2,25 +2,46 @@ import math
 import numpy as np
 import openrtdynamics2.lang as dy
 
+"""
+A library for modelling and control of vehicles than can be descirbed by the kinematic bicycle model.
 
+The methods are based on the paper
 
-# nice functions to create paths
+Klauer C., Schwabe M., and Mobalegh H., "Path Tracking Control for Urban Autonomous Driving", IFAC World Congress 2020, Berlin
+
+It implements
+- A kinematic model to describe the position of the front axle given velocity and steering
+- Acceleration at the front axle
+- Dynamic tracking of the closest point of the vehicle front axle to the path using a computationally efficient tracing algorithm 
+- Path following control in which the steering angle is adjusted such that the front axle follows a given path. 
+  The approach is independent of the driving velocity, which must be measured though and passed to the controller.
+  A velocity controller for the vehicle can be implemented separately.
+
+The implementation is based on the framework OpenRTDynamics 2 for modelling dynamic systems (Simulink-like, but text-based).
+Hence, efficient c++ code can be generated.
+"""
+
+# helper functions functions to design signals 
 def co(time, val, Ts=1.0):
     return val * np.ones(int(math.ceil(time / Ts)))
-
 
 def cosra(time, val1, val2, Ts=1.0):
     N = int(math.ceil(time / Ts))
     return val1 + (val2-val1) * (0.5 + 0.5 * np.sin(math.pi * np.linspace(0, 1, N) - math.pi/2))
-
 
 def ra(time, val1, val2, Ts=1.0):
     N = int(math.ceil(time / Ts))
     return np.linspace(val1, val2, N)
 
 
+#
+# Path storage and access
+#
 
 def import_path_data(data):
+    """
+        Create a data structure containing the driving path 
+    """
     # distance on path (D), position (X/Y), path orientation (PSI), curvature (K)
     path = {}
     path['D']   = dy.memory(datatype=dy.DataTypeFloat64(1), constant_array=data['D'] )
@@ -33,7 +54,60 @@ def import_path_data(data):
 
     return path
 
+
+def sample_path(path, index):
+    """
+        Read a sample of the given path at a given array-index
+    """
+
+    d   = dy.memory_read( memory=path['D'], index=index ) 
+    y   = dy.memory_read( memory=path['Y'], index=index ) 
+    x   = dy.memory_read( memory=path['X'], index=index ) 
+    psi = dy.memory_read( memory=path['PSI'], index=index )
+    K   = dy.memory_read( memory=path['K'], index=index )
+
+    return d, x, y, psi, K
+
+
+def sample_path_finite_difference(path, index):
+    """
+        Compute path orientation angle form x/y data only using finite differences
+    """
+
+    y1 = dy.memory_read( memory=path['Y'], index=index ) 
+    y2 = dy.memory_read( memory=path['Y'], index=index + dy.int32(1) )
+
+    x1 = dy.memory_read( memory=path['X'], index=index ) 
+    x2 = dy.memory_read( memory=path['X'], index=index + dy.int32(1) )
+
+    Delta_x = x2 - x1
+    Delta_y = y2 - y1
+
+    psi_r = dy.atan2(Delta_y, Delta_x)
+    x_r = x1
+    y_r = y1
+
+    return x_r, y_r, psi_r
+
+
+
+#
+# vehicle models
+#
+
 def discrete_time_bicycle_model(delta, v, Ts, wheelbase, x0=0.0, y0=0.0, psi0=0.0):
+    """
+        Implement an ODE solver (Euler) for the kinematic bicycle model equations
+
+        x, y           - describes the position of the front axle,
+        delta          - the steering angle
+        v              - the velocity measured on the front axle
+        wheelbase      - the distance between front- and rear axle
+        Ts             - the sampling time for the Euler integration
+        psi            - the orientation of the carbody
+        (x0, y0, psi0) - the initial states of the ODEs
+    """
+
     x   = dy.signal()
     y   = dy.signal()
     psi = dy.signal()
@@ -50,8 +124,21 @@ def discrete_time_bicycle_model(delta, v, Ts, wheelbase, x0=0.0, y0=0.0, psi0=0.
 
     return x, y, psi, x_dot, y_dot, psi_dot
 
+def compute_accelearation( v, v_dot, delta, delta_dot, psi_dot ):
+    """
+        Compute the acceleration at the front axle
+    """
+
+    a_lat = v_dot * dy.sin( delta ) + v * ( delta_dot + psi_dot ) * dy.cos( delta )
+    a_long = None
+
+    return a_lat, a_long
+
 
 def lateral_vehicle_model(u_delta, v, v_dot, Ts, wheelbase, x0=0.0, y0=0.0, psi0=0.0, delta0=0.0, delta_disturbance=None, delta_factor=None):
+    """
+    Am implementation of the for bicycle model and the acceleration at the front axle
+    """
 
     # add malicious factor to steering
     if delta_factor is not None:
@@ -73,14 +160,20 @@ def lateral_vehicle_model(u_delta, v, v_dot, Ts, wheelbase, x0=0.0, y0=0.0, psi0
     delta_dot = dy.diff( delta, initial_state=delta ) / dy.float64(Ts)
     delta = dy.delay( delta, delta0 )
 
-    # compute acceleration in the point (x,y) espessed in the vehicle frame
+    # compute acceleration in the point (x,y) in the vehicle frame
     a_lat, a_long = compute_accelearation( v, v_dot, delta, delta_dot, psi_dot )
 
     return x, y, psi, delta, delta_dot, a_lat, a_long, x_dot, y_dot, psi_dot
 
 
+#
+# line closest point tracker
+#
 
 def distance_between( x1, y1, x2, y2 ):
+    """
+        Compute the Euclidian distance between two points (x1,y1) and (x2,y2)
+    """
 
     dx_ = x1 - x2
     dy_ = y1 - y2
@@ -142,13 +235,13 @@ def track_projection_on_path(path, x, y):
         Project the point (x, y) onto the given path (closest distance) yielding the parameter d_star.
         Return the properties of the path at d_star. Dynamic changes in (x, y) are continuously tracked.
 
-        Assumption: special assumtions on the evolultion of (x, y) are requied:
+        Assumption: special assumptions on the evolution of (x, y) are required:
         .) not leaving the a distance to the path of more than the curve radius at the closest distance.
         .) the projection-parameter d_star is assumed to increase over time. (I.e. in case (x,y) describes
            a vehicle, the velocity shall be positive and the direction of driving aligned to the 
            path +- 90 degrees)
 
-        The implementation internally uses the function tracker() to perform an optimzed tracking.
+        The implementation internally uses the function tracker() to perform an optimized tracking.
 
         returns
 
@@ -175,6 +268,9 @@ def track_projection_on_path(path, x, y):
 
 
 def find_second_closest( path, x, y, index_star ):
+    """
+        Given the index of the clostest point, compute the index of the 2nd clostest point.
+    """
         
     one = dy.int32(1)
 
@@ -212,6 +308,8 @@ def compute_distance_from_linear_interpolation( d1, d2 ):
 
 def tracker_distance_ahead(path, current_index, distance_ahead):
     """
+        Track a point on the path that is ahead to the closest point by a given distance
+
 
                   <----- Delta_index_track ----->
         array: X  X  X  X  X  X  X  X  X  X  X  X  X  X  X 
@@ -273,16 +371,16 @@ def tracker_distance_ahead(path, current_index, distance_ahead):
         J_to_verify = J( current_index + Delta_index_track + Delta_index )
         J_to_verify.set_name('J_to_verify')
 
-        step_caused_improvment = J_to_verify < J_star
+        step_caused_improvement = J_to_verify < J_star
 
         # replace the 
-        J_star_next = dy.conditional_overwrite( J_star, step_caused_improvment, J_to_verify )
+        J_star_next = dy.conditional_overwrite( J_star, step_caused_improvement, J_to_verify )
 
         # state for J_star
         J_star << dy.delay( J_star_next, initial_state=J_star_0 ).set_name('J_star')
 
         # loop break condition
-        system.loop_until( dy.logic_not( step_caused_improvment ) )
+        system.loop_until( dy.logic_not( step_caused_improvement ) )
         #system.loop_until( dy.int32(1) == dy.int32(0) )
 
         # return the results computed in the loop        
@@ -302,68 +400,16 @@ def tracker_distance_ahead(path, current_index, distance_ahead):
 
 
 
-def global_lookup_distance_index( path_distance_storage, path_x_storage, path_y_storage, distance ):
-    #
-    source_code = """
-        index = 0;
-        int i = 0;
-
-        for (i = 0; i < 100; ++i ) {
-            if ( path_distance_storage[i] < distance && path_distance_storage[i+1] > distance ) {
-                index = i;
-                break;
-            }
-        }
-    """
-    array_type = dy.DataTypeArray( 360, datatype=dy.DataTypeFloat64(1) )
-    outputs = dy.generic_cpp_static(input_signals=[ path_distance_storage, path_x_storage, path_y_storage, distance ], 
-                                    input_names=[ 'path_distance_storage', 'path_x_storage', 'path_y_storage', 'distance' ], 
-                                    input_types=[ array_type, array_type, array_type, dy.DataTypeFloat64(1) ], 
-                                    output_names=['index'],
-                                    output_types=[ dy.DataTypeInt32(1) ],
-                                    cpp_source_code = source_code )
-
-    index = outputs[0]
-
-    return index
 
 
 
-
-def sample_path(path, index):
-
-    d   = dy.memory_read( memory=path['D'], index=index ) 
-    y   = dy.memory_read( memory=path['Y'], index=index ) 
-    x   = dy.memory_read( memory=path['X'], index=index ) 
-    psi = dy.memory_read( memory=path['PSI'], index=index )
-    K   = dy.memory_read( memory=path['K'], index=index )
-
-    return d, x, y, psi, K
-
-
-
-
-def sample_path_finite_difference(path, index):
-
-    y1 = dy.memory_read( memory=path['Y'], index=index ) 
-    y2 = dy.memory_read( memory=path['Y'], index=index + dy.int32(1) )
-
-    x1 = dy.memory_read( memory=path['X'], index=index ) 
-    x2 = dy.memory_read( memory=path['X'], index=index + dy.int32(1) )
-
-    Delta_x = x2 - x1
-    Delta_y = y2 - y1
-
-    psi_r = dy.atan2(Delta_y, Delta_x)
-    x_r = x1
-    y_r = y1
-
-    return x_r, y_r, psi_r
 
 
 
 def distance_to_Delta_l( distance, psi_r, x_r, y_r, x, y ):
-
+    """
+    Add sign information to a closest distance measurement 
+    """
     psi_tmp = dy.atan2(y - y_r, x - x_r)
     delta_angle = dy.unwrap_angle( psi_r - psi_tmp, normalize_around_zero=True )
     sign = dy.conditional_overwrite(dy.float64(1.0), delta_angle > dy.float64(0) ,  -1.0  )
@@ -372,6 +418,41 @@ def distance_to_Delta_l( distance, psi_r, x_r, y_r, x, y ):
     return Delta_l
 
 
+
+
+
+#
+# models assuming path following
+#
+
+def project_velocity_on_path(velocity, Delta_u, Delta_l, K_r):
+    """
+        Compute the velocity of the closest point on the path
+    """
+
+    #
+    # This evaluates the formula
+    #
+    # v_star = d d_star / dt = v * cos( Delta_u ) / ( 1 - Delta_l * K(d_star) ) 
+    #
+
+    v_star = velocity * dy.cos( Delta_u ) / ( dy.float64(1) - Delta_l * K_r ) 
+
+    return v_star
+
+def compute_nominal_steering_from_curvature( Ts : float, l_r : float, v, K_r ):
+    """
+        compute the nominal steering angle and rate from given path heading and curvature
+        signals.
+    """
+
+    psi_dot = dy.signal()
+
+    delta_dot = v * K_r - psi_dot
+    delta = dy.euler_integrator( delta_dot, Ts )
+    psi_dot << (v / dy.float64(l_r) * dy.sin(delta))
+
+    return delta, delta_dot, psi_dot
 
 def compute_path_orientation_from_curvature( Ts : float, velocity, psi_rr, K_r, L ):
     """
@@ -399,23 +480,15 @@ def compute_path_orientation_from_curvature( Ts : float, velocity, psi_rr, K_r, 
 
     return psi_r_reconst, psi_r_reconst_dot
 
-
-
-def compute_nominal_steering_from_curvature( Ts : float, l_r : float, v, K_r ):
-    """
-        compute the nominal steering angle and rate from given path heading and curvature
-        signals.
-    """
-
-    psi_dot = dy.signal()
-
-    delta_dot = v * K_r - psi_dot
-    delta = dy.euler_integrator( delta_dot, Ts )
-    psi_dot << (v / dy.float64(l_r) * dy.sin(delta))
-
-    return delta, delta_dot, psi_dot
-
 def compute_nominal_steering_from_path_heading( Ts : float, l_r : float, v, psi_r ):
+    """
+        Compute the steering angle to follow a path given the path tangent angle
+
+        Internally uses a (partial) model of the bicycle-vehicle to comput the
+        optimal steering angle given the path orientation-angle. Internally,
+        the orientation of the vehicle body (psi) is computed to determine the optimal
+        steering angle.
+    """
 
     psi = dy.signal()
 
@@ -426,26 +499,98 @@ def compute_nominal_steering_from_path_heading( Ts : float, l_r : float, v, psi_
 
     return delta, psi, psi_dot
 
-def project_velocity_on_path(velocity, Delta_u, Delta_l, K_r):
+#
+# Path following control
+#
 
-    # v_star = d d_star / dt = v * cos( Delta_u ) / ( 1 - Delta_l * K(d_star) ) 
-    v_star = velocity * dy.cos( Delta_u ) / ( dy.float64(1) - Delta_l * K_r ) 
+def path_following_controller_basic( path, x, y, psi, velocity, Delta_l_r = 0.0, k_p=2.0, Ts=0.01  ):
+    """
+        Basic steering control for path tracking
+        
+        Path following steering control for exact path following and P-control to control the lateral 
+        distance to the path are combined.
+    
+        Controlls a kinematic bicycle model (assumption) to follow the given path.
+        Herein, the steering angle delta is the control variable. The variables
+        x, y, psi, and velocity are measurements taken from the controlled system.
+        The lateral offset Delta_l_r to the path is the reference.
+        
 
-    return v_star
+        Return values
+        -------------
 
-def compute_accelearation( v, v_dot, delta, delta_dot, psi_dot ):
+        results = {}
+        results['x_r']       = x_r          # the current x-position of the closest point on the reference path
+        results['y_r']       = y_r          # the current y-position of the closest point on the reference path
+        results['v_star']    = v_star       # the current velocity of the closest point on the reference path
+        results['d_star']    = d_star       # the current distance parameter of the closest point on the reference path
+        results['psi_r']     = psi_r        # the current path-tangent orientation angle in the closest point on the reference path
+        results['psi_r_dot'] = psi_r_dot    # the time derivative of psi_r
+        results['Delta_l_r'] = Delta_l_r    # the reference to the distance to the path
+        results['Delta_l']   = Delta_l      # the distance to the closest point on the reference path
+        results['Delta_u']   = Delta_u      # small steering delta
+        results['delta']     = delta        # the requested steering angle / the control variable 
 
-    a_lat = v_dot * dy.sin( delta ) + v * ( delta_dot + psi_dot ) * dy.cos( delta )
-    a_long = None
+    """
 
-    return a_lat, a_long
+
+    # track the evolution of the closest point on the path to the vehicles position
+    d_star, x_r, y_r, psi_rr, K_r, Delta_l, tracked_index, Delta_index = track_projection_on_path(path, x, y)
+
+    #
+    # project the vehicle velocity onto the path yielding v_star 
+    #
+    # Used formula inside project_velocity_on_path:
+    #   v_star = d d_star / dt = v * cos( Delta_u ) / ( 1 - Delta_l * K(d_star) ) 
+    #
+
+    Delta_u = dy.signal() # feedback from control
+    v_star = project_velocity_on_path(velocity, Delta_u, Delta_l, K_r)
+
+
+    #
+    # compute an enhanced (less noise) signal for the path orientation psi_r by integrating the 
+    # curvature profile and fusing the result with psi_rr to mitigate the integration drift.
+    #
+
+    psi_r, psi_r_dot = compute_path_orientation_from_curvature( Ts, v_star, psi_rr, K_r, L=1.0 )
+    
+    # feedback control
+    u = dy.PID_controller(r=Delta_l_r, y=Delta_l, Ts=Ts, kp=k_p)
+
+    # path tracking
+    # resulting lateral model u --> Delta_l : 1/s
+    Delta_u << dy.asin( dy.saturate(u / velocity, -0.99, 0.99) )
+    delta = dy.unwrap_angle(angle=psi_r - psi + Delta_u, normalize_around_zero = True)
+
+    
+    # collect resulting signals
+    results = {}
+    results['x_r']       = x_r          # the current x-position of the closest point on the reference path
+    results['y_r']       = y_r          # the current y-position of the closest point on the reference path
+    results['v_star']    = v_star       # the current velocity of the closest point on the reference path
+    results['d_star']    = d_star       # the current distance parameter of the closest point on the reference path
+    results['psi_r']     = psi_r        # the current path-tangent orientation angle in the closest point on the reference path
+    results['psi_r_dot'] = psi_r_dot    # the time derivative of psi_r
+    results['Delta_l_r'] = Delta_l_r    # the reference to the distance to the path
+    results['Delta_l']   = Delta_l      # the distance to the closest point on the reference path
+    results['Delta_u']   = Delta_u      # small steering delta
+    results['delta']     = delta        # the requested steering angle / the control variable 
+
+    return results
+
+
+
+#
+# safety
+#
 
 def compute_steering_constraints( v, v_dot, psi_dot, delta, a_l_min, a_l_max ):
     """
+        Compute constraints for the steering angle and its rate so that the acceleration is bounded 
 
-        delta  - steering state of the vehicle (i.e., not the unsaturated control command)
+        delta  - the steering angle state of the vehicle (i.e., not the unsaturated control command)
     """
-
 
     delta_min = dy.float64(-1.0)
     delta_max = dy.float64(1.0)
@@ -459,6 +604,9 @@ def compute_steering_constraints( v, v_dot, psi_dot, delta, a_l_min, a_l_max ):
 
 
 
+#
+# For unit-test / reference purposes
+#
 
 def lookup_closest_point( N, path_distance_storage, path_x_storage, path_y_storage, x, y ):
     """
@@ -505,7 +653,7 @@ def lookup_closest_point( N, path_distance_storage, path_x_storage, path_y_stora
             interval_stop  = min_index;
         }
 
-        // linear interpolation
+        // linear interpolation (unused)
         double dx = path_x_storage[interval_stop] - path_x_storage[interval_start] ;
         double dy = path_y_storage[interval_stop] - path_y_storage[interval_start] ;
 
@@ -531,3 +679,28 @@ def lookup_closest_point( N, path_distance_storage, path_x_storage, path_y_stora
     return index_closest, distance, index_start
 
 
+
+def global_lookup_distance_index( path_distance_storage, path_x_storage, path_y_storage, distance ):
+    #
+    source_code = """
+        index = 0;
+        int i = 0;
+
+        for (i = 0; i < 100; ++i ) {
+            if ( path_distance_storage[i] < distance && path_distance_storage[i+1] > distance ) {
+                index = i;
+                break;
+            }
+        }
+    """
+    array_type = dy.DataTypeArray( 360, datatype=dy.DataTypeFloat64(1) )
+    outputs = dy.generic_cpp_static(input_signals=[ path_distance_storage, path_x_storage, path_y_storage, distance ], 
+                                    input_names=[ 'path_distance_storage', 'path_x_storage', 'path_y_storage', 'distance' ], 
+                                    input_types=[ array_type, array_type, array_type, dy.DataTypeFloat64(1) ], 
+                                    output_names=['index'],
+                                    output_types=[ dy.DataTypeInt32(1) ],
+                                    cpp_source_code = source_code )
+
+    index = outputs[0]
+
+    return index
