@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from scipy import signal
 import openrtdynamics2.lang as dy
 
 """
@@ -21,17 +22,6 @@ The implementation is based on the framework OpenRTDynamics 2 for modelling dyna
 Hence, efficient c++ code can be generated.
 """
 
-# helper functions functions to design signals 
-def co(time, val, Ts=1.0):
-    return val * np.ones(int(math.ceil(time / Ts)))
-
-def cosra(time, val1, val2, Ts=1.0):
-    N = int(math.ceil(time / Ts))
-    return val1 + (val2-val1) * (0.5 + 0.5 * np.sin(math.pi * np.linspace(0, 1, N) - math.pi/2))
-
-def ra(time, val1, val2, Ts=1.0):
-    N = int(math.ceil(time / Ts))
-    return np.linspace(val1, val2, N)
 
 
 #
@@ -503,9 +493,9 @@ def compute_nominal_steering_from_path_heading( Ts : float, l_r : float, v, psi_
 # Path following control
 #
 
-def path_following_controller_basic( path, x, y, psi, velocity, Delta_l_r = 0.0, k_p=2.0, Ts=0.01  ):
+def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Delta_l_r_dot = None, k_p=2.0, Ts=0.01, psi_dot = None, velocity_dot = None, Delta_l_r_dotdot = None, Delta_l_dot = None  ):
     """
-        Basic steering control for path tracking
+        Basic steering control for path tracking using proportional lateral error compensation
         
         Path following steering control for exact path following and P-control to control the lateral 
         distance to the path are combined.
@@ -513,26 +503,38 @@ def path_following_controller_basic( path, x, y, psi, velocity, Delta_l_r = 0.0,
         Controlls a kinematic bicycle model (assumption) to follow the given path.
         Herein, the steering angle delta is the control variable. The variables
         x, y, psi, and velocity are measurements taken from the controlled system.
-        The lateral offset Delta_l_r to the path is the reference.
+        The lateral offset Delta_l_r to the path is the reference. The optional
+        signal Delta_l_r_dot describes the time derivative of Delta_l_r.
         
 
         Return values
         -------------
 
         results = {}
-        results['x_r']       = x_r          # the current x-position of the closest point on the reference path
-        results['y_r']       = y_r          # the current y-position of the closest point on the reference path
-        results['v_star']    = v_star       # the current velocity of the closest point on the reference path
-        results['d_star']    = d_star       # the current distance parameter of the closest point on the reference path
-        results['psi_r']     = psi_r        # the current path-tangent orientation angle in the closest point on the reference path
-        results['psi_r_dot'] = psi_r_dot    # the time derivative of psi_r
-        results['Delta_l_r'] = Delta_l_r    # the reference to the distance to the path
-        results['Delta_l']   = Delta_l      # the distance to the closest point on the reference path
-        results['Delta_u']   = Delta_u      # small steering delta
-        results['delta']     = delta        # the requested steering angle / the control variable 
+        results['x_r']                      # the current x-position of the closest point on the reference path
+        results['y_r']                      # the current y-position of the closest point on the reference path
+        results['v_star']                   # the current velocity of the closest point on the reference path
+        results['d_star']                   # the current distance parameter of the closest point on the reference path
+        results['psi_r']                    # the current path-tangent orientation angle in the closest point on the reference path
+        results['psi_r_dot']                # the time derivative of psi_r
+        results['Delta_l_r']                # the reference to the distance to the path
+        results['Delta_l_r_dot']            # optional: the time derivative of Delta_l_r
+        results['Delta_l']                  # the distance to the closest point on the reference path
+        results['Delta_u']                  # small steering delta
+        results['delta']                    # the requested steering angle / the control variable
+
+        in case Delta_l_r_dot, psi_dot, velocity_dot, and Delta_l_r_dotdot are given
+        the steering derivatives can be computed.
+
+        results['Delta_u_dot']              # the derivative of Delta_u
+        results['delta_dot']                # the derivative of delta_dot
+
+        Optionally, Delta_l_dot might be further given which improves the accuracy of the derivatives
+        in case of strong feedback control activity.  
 
     """
-
+    # structure for output signals
+    results = {}
 
     # track the evolution of the closest point on the path to the vehicles position
     d_star, x_r, y_r, psi_rr, K_r, Delta_l, tracked_index, Delta_index = track_projection_on_path(path, x, y)
@@ -556,16 +558,38 @@ def path_following_controller_basic( path, x, y, psi, velocity, Delta_l_r = 0.0,
     psi_r, psi_r_dot = compute_path_orientation_from_curvature( Ts, v_star, psi_rr, K_r, L=1.0 )
     
     # feedback control
-    u = dy.PID_controller(r=Delta_l_r, y=Delta_l, Ts=Ts, kp=k_p)
+    u_fb = k_p * (Delta_l_r - Delta_l)
+
+    if Delta_l_r_dot is not None:
+        u = Delta_l_r_dot + u_fb
+    else:
+        u = u_fb
 
     # path tracking
     # resulting lateral model u --> Delta_l : 1/s
     Delta_u << dy.asin( dy.saturate(u / velocity, -0.99, 0.99) )
     delta = dy.unwrap_angle(angle=psi_r - psi + Delta_u, normalize_around_zero = True)
 
-    
+    # derivatives
+    if psi_dot is not None and Delta_l_r_dot is not None and velocity_dot is not None and Delta_l_r_dotdot is not None:
+        
+        if Delta_l_dot is None:
+            u_dot = Delta_l_r_dotdot # + 0 neglect numerical random walk error compensation 
+        else:
+            u_dot = Delta_l_r_dotdot + Delta_l_dot
+
+
+        Delta_u_dot = dy.cos( u / velocity ) * ( velocity * u_dot - velocity_dot * u ) / ( velocity*velocity )
+        delta_dot = psi_r_dot - psi_dot + Delta_u_dot
+
+        results['Delta_u_dot']       = Delta_u_dot
+        results['delta_dot']         = delta_dot
+
+
+
+
+
     # collect resulting signals
-    results = {}
     results['x_r']       = x_r          # the current x-position of the closest point on the reference path
     results['y_r']       = y_r          # the current y-position of the closest point on the reference path
     results['v_star']    = v_star       # the current velocity of the closest point on the reference path
@@ -704,3 +728,46 @@ def global_lookup_distance_index( path_distance_storage, path_x_storage, path_y_
     index = outputs[0]
 
     return index
+
+
+
+#
+# helper functions functions for numpy calculations 
+#
+
+def co(time, val, Ts=1.0):
+    return val * np.ones(int(math.ceil(time / Ts)))
+
+def cosra(time, val1, val2, Ts=1.0):
+    N = int(math.ceil(time / Ts))
+    return val1 + (val2-val1) * (0.5 + 0.5 * np.sin(math.pi * np.linspace(0, 1, N) - math.pi/2))
+
+def ra(time, val1, val2, Ts=1.0):
+    N = int(math.ceil(time / Ts))
+    return np.linspace(val1, val2, N)
+
+def filtfilt(Ts, input_seq, cutoff_frq = 0.0325):
+    
+    b, a = signal.butter(1, cutoff_frq)
+    output_seq = signal.filtfilt(b, a, input_seq, padlen=150)
+    
+    return output_seq
+
+
+def numerical_derivative(Ts, u, cutoff_frq = 0.0325):
+    u_dot = np.diff( u  ) / Ts
+
+    u_dot_filtered = filtfilt(Ts, u_dot, cutoff_frq)
+    
+    u_dot_filtered = np.concatenate(( u_dot_filtered , [ u_dot_filtered[-1] ] ))
+
+    return u_dot_filtered
+
+def make_time(Ts, seq):
+    N = np.size(seq)
+    time_seq = np.linspace(0, Ts*(N-1), N)
+    
+    # test: np.diff(make_time(Ts, Delta_l_r_profile)) == Ts
+    
+    return time_seq
+
