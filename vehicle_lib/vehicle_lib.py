@@ -88,6 +88,22 @@ def sample_path_finite_difference(path, index):
 
     return x_r, y_r, psi_r
 
+def linear_interpolation(v1, v2, interpolation_factor):
+    return v1 + (v2 - v1) * interpolation_factor
+
+def sample_path_linear_interpolation(path, i_s, i_e, interpolation_factor):
+
+    d_s, x_s, y_s, psi_s, K_s = sample_path(path, i_s)
+    d_e, x_e, y_e, psi_e, K_e = sample_path(path, i_e)
+
+    d   = linear_interpolation( d_s,   d_e,   interpolation_factor )
+    x   = linear_interpolation( x_s,   x_e,   interpolation_factor )
+    y   = linear_interpolation( y_s,   y_e,   interpolation_factor )
+    psi = linear_interpolation( psi_s, psi_e, interpolation_factor )
+    K   = linear_interpolation( K_s,   K_e,   interpolation_factor )
+
+    return d, x, y, psi, K
+
 #
 # geometry
 #
@@ -103,25 +119,29 @@ def distance_between( x1, y1, x2, y2 ):
     return dy.sqrt(  dx_*dx_ + dy_*dy_ )
 
 
-def distance_to_line(xs, ys, xe, ye, x_test, y_test):
+def distance_to_line(x_s, y_s, x_e, y_e, x_test, y_test):
     """
         compute the shortest distance to a line
 
         returns a negative distance in case  (x_test, y_test) is to the left of the vector pointing from
-        (xs, ys) to (xe, ye)
+        (x_s, y_s) to (x_e, y_e)
     """
-    Delta_x = xe - xs
-    Delta_y = ye - ys
+    Delta_x = x_e - x_s
+    Delta_y = y_e - y_s
 
-    x_test_ = x_test - xs
-    y_test_ = y_test - ys
+    x_test_ = x_test - x_s
+    y_test_ = y_test - y_s
 
     psi = dy.atan2(Delta_y, Delta_x)
     test_ang = dy.atan2(y_test_, x_test_)
     delta_angle = dy.unwrap_angle(test_ang - psi,  normalize_around_zero=True)
-    distance = dy.sin(delta_angle) * dy.sqrt(x_test_ * x_test_ + y_test_ * y_test_)
 
-    return distance
+    length_s_to_test = dy.sqrt(x_test_ * x_test_ + y_test_ * y_test_)
+
+    distance = dy.sin(delta_angle) * length_s_to_test
+    distance_s_to_projection = dy.cos(delta_angle) * length_s_to_test
+
+    return distance, distance_s_to_projection
 
 
 
@@ -171,7 +191,7 @@ def compute_accelearation( v, v_dot, delta, delta_dot, psi_dot ):
 
 def lateral_vehicle_model(u_delta, v, v_dot, Ts, wheelbase, x0=0.0, y0=0.0, psi0=0.0, delta0=0.0, delta_disturbance=None, delta_factor=None):
     """
-    Bicycle model and the acceleration at the front axle
+        Bicycle model and the acceleration at the front axle
     """
 
     # add malicious factor to steering
@@ -255,7 +275,7 @@ def tracker(path, x, y):
 
 
 
-def find_second_closest( path, x, y, index_star ):
+def _get_line_segment( path, x, y, index_star ):
     """
         Given the index of the clostest point, compute the index of the 2nd clostest point.
     """
@@ -280,31 +300,48 @@ def find_second_closest( path, x, y, index_star ):
     index_second_star = dy.conditional_overwrite( index_star + one, condition=which, new_value=index_star - one )
 
     #
+    i_s = dy.conditional_overwrite( index_star,        condition=which, new_value=index_star - one )
+    i_e = dy.conditional_overwrite( index_star + one , condition=which, new_value=index_star )
+
+    #
     # get start/end xy-points of the line segment which is closest
-    # the line is described by (xs, ys) --> (xe, ye)
+    # the line is described by (x_s, y_s) --> (x_e, y_e)
     #
 
-    # find start point (xs, ys)
-    xs = dy.conditional_overwrite( x_star, condition=which, new_value=x_test_im1 )
-    ys = dy.conditional_overwrite( y_star, condition=which, new_value=y_test_im1 )
+    # find start point (x_s, y_s)
+    x_s = dy.conditional_overwrite( x_star, condition=which, new_value=x_test_im1 )
+    y_s = dy.conditional_overwrite( y_star, condition=which, new_value=y_test_im1 )
 
-    # find stop point (xe, ye)
-    xe = dy.conditional_overwrite( x_test_ip1, condition=which, new_value=x_star )
-    ye = dy.conditional_overwrite( y_test_ip1, condition=which, new_value=y_star )
+    # find stop point (x_e, y_e)
+    x_e = dy.conditional_overwrite( x_test_ip1, condition=which, new_value=x_star )
+    y_e = dy.conditional_overwrite( y_test_ip1, condition=which, new_value=y_star )
 
-    return second_clostest_distance, index_second_star, xs, ys, xe, ye
-
-
+    return i_s, i_e, x_s, y_s, x_e, y_e, index_second_star, second_clostest_distance
 
 
-def track_projection_on_path(path, x, y):
+
+
+
+def _distance_to_Delta_l( distance, psi_r, x_r, y_r, x, y ):
+    """
+        Add sign information to a closest distance measurement 
+    """
+    psi_tmp = dy.atan2(y - y_r, x - x_r)
+    delta_angle = dy.unwrap_angle( psi_r - psi_tmp, normalize_around_zero=True )
+    sign = dy.conditional_overwrite(dy.float64(1.0), delta_angle > dy.float64(0) ,  -1.0  )
+    Delta_l = distance * sign
+
+    return Delta_l
+
+
+def track_projection_on_path(path, x, y, use_linear_interpolation_in_sampling=True):
     """
         Project the point (x, y) onto the given path (closest distance) yielding the parameter d_star.
         Return the properties of the path at d_star. Dynamic changes in (x, y) are continuously tracked.
 
         Assumption: special assumptions on the evolution of (x, y) are required:
         .) not leaving the a distance to the path of more than the curve radius at the closest distance.
-        .) the projection-parameter d_star is assumed to increase over time. (I.e. in case (x,y) describes
+        .) the projection-parameter d_star is assumed to increase over time. (I.e., in case (x,y) describes
            a vehicle, the velocity shall be positive and the direction of driving aligned to the 
            path +- 90 degrees)
 
@@ -326,36 +363,67 @@ def track_projection_on_path(path, x, y):
     # track the evolution of the closest point on the path to the vehicles position
     tracked_index, Delta_index, closest_distance = tracker(path, x, y)
 
-    # get the reference
-    d_star, x_r, y_r, psi_rr, K_r = sample_path(path, index=tracked_index + dy.int32(1) )
-
-    # add sign information to the distance
-    Delta_l_closest_path_sample = distance_to_Delta_l( closest_distance, psi_rr, x_r, y_r, x, y )
-
     # The index 'tracked_index' is the index referring to the closest point to the path.
     # Now, find the index of the 2nd closest point
-    _, index_2nd_closest, xs, ys, xe, ye = find_second_closest( path, x, y, tracked_index )
 
-    # use linear interpolation of the line between the path xy-samples
-    # the line is described by the start/end points (xs, ys) ---> (xe, ye)
-    Delta_l_lin_interpol = distance_to_line(xs, ys, xe, ye, x_test=x, y_test=y)
+    i_s, i_e, x_s, y_s, x_e, y_e, index_2nd_closest, _ = _get_line_segment( path, x, y, tracked_index )
+
+    if use_linear_interpolation_in_sampling:
+        # use linear interpolation of the line between the path xy-samples
+        # the line is described by the start/end points (x_s, y_s) ---> (x_e, y_e)
+
+        Delta_l_lin_interpol, distance_s_to_projection = distance_to_line(x_s, y_s, x_e, y_e, x_test=x, y_test=y)
+        interpolation_factor = distance_s_to_projection / distance_between( x_s, y_s, x_e, y_e )
+
+
+    #
+    # sample the path
+    #
+
+    if use_linear_interpolation_in_sampling:
+        # zero-order hold style sampling
+        d_star, x_r, y_r, psi_rr, K_r = sample_path_linear_interpolation(path, i_s, i_e, interpolation_factor)
+    else:
+        # linear interpolation
+        d_star, x_r, y_r, psi_rr, K_r = sample_path(path, index=i_s )
+
+    #
+    # compute the distance to closest sample
+    #
+
+    Delta_l_closest_path_sample = _distance_to_Delta_l( closest_distance, psi_rr, x_r, y_r, x, y )
+
 
     # Finally assign the best estimate of the lateral distance to the path
-    Delta_l = Delta_l_lin_interpol
+    if use_linear_interpolation_in_sampling:
+        Delta_l = Delta_l_lin_interpol
+    else:
+        Delta_l = Delta_l_closest_path_sample
 
+
+    #
     # return internal signals
+    #
+
     internals={}
-    internals['Delta_l_lin_interpol'] = Delta_l_lin_interpol
+
+    if use_linear_interpolation_in_sampling:
+        internals['Delta_l_lin_interpol'] = Delta_l_lin_interpol
+
+        internals['interpolation_factor'] = interpolation_factor
+
+    internals['i_s'] = i_s
+    internals['i_e'] = i_e
+    internals['x_s'] = x_s
+    internals['y_s'] = y_s
+    internals['x_e'] = x_e
+    internals['y_e'] = y_e
+
     internals['Delta_l_closest_path_sample'] = Delta_l_closest_path_sample
 
     internals['i_star_2']    = index_2nd_closest
     internals['i_star']      = tracked_index
     internals['Delta_index'] = Delta_index
-
-    internals['xs'] = xs
-    internals['ys'] = ys
-    internals['xe'] = xe
-    internals['ye'] = ye
 
     return d_star, x_r, y_r, psi_rr, K_r, Delta_l, tracked_index, Delta_index, internals
 
@@ -466,19 +534,6 @@ def tracker_distance_ahead(path, current_index, distance_ahead):
 
 
 
-def distance_to_Delta_l( distance, psi_r, x_r, y_r, x, y ):
-    """
-    Add sign information to a closest distance measurement 
-    """
-    psi_tmp = dy.atan2(y - y_r, x - x_r)
-    delta_angle = dy.unwrap_angle( psi_r - psi_tmp, normalize_around_zero=True )
-    sign = dy.conditional_overwrite(dy.float64(1.0), delta_angle > dy.float64(0) ,  -1.0  )
-    Delta_l = distance * sign
-
-    return Delta_l
-
-
-
 
 
 #
@@ -576,6 +631,7 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
         The lateral offset Delta_l_r to the path is the reference. The optional
         signal Delta_l_r_dot describes the time derivative of Delta_l_r.
         
+        Ts - the sampling time
 
         Return values
         -------------
