@@ -52,7 +52,7 @@ d_star, x_r, y_r, psi_rr, K_r, Delta_l, tracked_index, Delta_index = track_proje
 Delta_u = dy.signal() # feedback from control
 v_star = project_velocity_on_path(velocity, Delta_u, Delta_l, K_r)
 
-dy.append_primay_ouput(v_star,     'v_star')
+dy.append_output(v_star,     'v_star')
 
 #
 # compute an enhanced (less noise) signal for the path orientation psi_r by integrating the 
@@ -61,8 +61,8 @@ dy.append_primay_ouput(v_star,     'v_star')
 
 psi_r, psi_r_dot = compute_path_orientation_from_curvature( Ts, v_star, psi_rr, K_r, L=1.0 )
 
-dy.append_primay_ouput(psi_rr,    'psi_rr')
-dy.append_primay_ouput(psi_r_dot, 'psi_r_dot')
+dy.append_output(psi_rr,    'psi_rr')
+dy.append_output(psi_r_dot, 'psi_r_dot')
 
 
 
@@ -87,11 +87,11 @@ u_move_right = dy.signal_step( dy.int32(500) ) - dy.signal_step( dy.int32(350) )
 # apply a rate limiter to limit the acceleration
 u = dy.rate_limit( max_lateral_velocity * (u_move_left + u_move_right), Ts, dy.float64(-1) * max_lateral_accleration, max_lateral_accleration) 
 
-dy.append_primay_ouput(u, 'u')
+dy.append_output(u, 'u')
 
 # internal lateral model (to verify the lateral dynamics of the simulated vehicle)
 Delta_l_mdl = dy.euler_integrator(u, Ts)
-dy.append_primay_ouput(Delta_l_mdl, 'Delta_l_mdl')
+dy.append_output(Delta_l_mdl, 'Delta_l_mdl')
 
 
 
@@ -111,8 +111,8 @@ delta_star = psi_r - psi
 delta =  delta_star + Delta_u
 delta = dy.unwrap_angle(angle=delta, normalize_around_zero = True)
 
-dy.append_primay_ouput(Delta_u, 'Delta_u')
-dy.append_primay_ouput(delta_star, 'delta_star')
+dy.append_output(Delta_u, 'Delta_u')
+dy.append_output(delta_star, 'delta_star')
 
 
 #
@@ -137,17 +137,17 @@ psi << psi_
 # outputs: these are available for visualization in the html set-up
 #
 
-dy.append_primay_ouput(x, 'x')
-dy.append_primay_ouput(y, 'y')
-dy.append_primay_ouput(psi, 'psi')
+dy.append_output(x, 'x')
+dy.append_output(y, 'y')
+dy.append_output(psi, 'psi')
 
-dy.append_primay_ouput(delta, 'steering')
+dy.append_output(delta, 'steering')
 
-dy.append_primay_ouput(x_r, 'x_r')
-dy.append_primay_ouput(y_r, 'y_r')
-dy.append_primay_ouput(psi_r, 'psi_r')
+dy.append_output(x_r, 'x_r')
+dy.append_output(y_r, 'y_r')
+dy.append_output(psi_r, 'psi_r')
 
-dy.append_primay_ouput(Delta_l, 'Delta_l')
+dy.append_output(Delta_l, 'Delta_l')
 
 
 

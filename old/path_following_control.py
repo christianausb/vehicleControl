@@ -46,7 +46,7 @@ d_star, x_r, y_r, psi_r, K_r, Delta_l, tracked_index, Delta_index = track_projec
 # reference for the lateral distance
 Delta_l_r = dy.float64(0.0) # zero in this example
 
-dy.append_primay_ouput(Delta_l_r, 'Delta_l_r')
+dy.append_output(Delta_l_r, 'Delta_l_r')
 
 # feedback control
 u = dy.PID_controller(r=Delta_l_r, y=Delta_l, Ts=0.01, kp=k_p)
@@ -58,8 +58,8 @@ delta_star = psi_r - psi
 steering =  delta_star + Delta_u
 steering = dy.unwrap_angle(angle=steering, normalize_around_zero = True)
 
-dy.append_primay_ouput(Delta_u, 'Delta_u')
-dy.append_primay_ouput(delta_star, 'delta_star')
+dy.append_output(Delta_u, 'Delta_u')
+dy.append_output(delta_star, 'delta_star')
 
 
 #
@@ -90,23 +90,23 @@ psi << psi_
 # outputs: these are available for visualization in the html set-up
 #
 
-dy.append_primay_ouput(x, 'x')
-dy.append_primay_ouput(y, 'y')
-dy.append_primay_ouput(psi, 'psi')
+dy.append_output(x, 'x')
+dy.append_output(y, 'y')
+dy.append_output(psi, 'psi')
 
-dy.append_primay_ouput(steering, 'steering')
+dy.append_output(steering, 'steering')
 
-dy.append_primay_ouput(x_r, 'x_r')
-dy.append_primay_ouput(y_r, 'y_r')
-dy.append_primay_ouput(psi_r, 'psi_r')
+dy.append_output(x_r, 'x_r')
+dy.append_output(y_r, 'y_r')
+dy.append_output(psi_r, 'psi_r')
 
-dy.append_primay_ouput(Delta_l, 'Delta_l')
+dy.append_output(Delta_l, 'Delta_l')
 
-dy.append_primay_ouput(steering_disturbance, 'steering_disturbance')
-dy.append_primay_ouput(disturbed_steering, 'disturbed_steering')
+dy.append_output(steering_disturbance, 'steering_disturbance')
+dy.append_output(disturbed_steering, 'disturbed_steering')
 
-dy.append_primay_ouput(tracked_index, 'tracked_index')
-dy.append_primay_ouput(Delta_index, 'Delta_index')
+dy.append_output(tracked_index, 'tracked_index')
+dy.append_output(Delta_index, 'Delta_index')
 
 
 # generate code for Web Assembly (wasm), requires emcc (emscripten) to build

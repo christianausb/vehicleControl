@@ -52,8 +52,8 @@ d_star, x_r, y_r, psi_r, K_r, Delta_l, tracked_index, Delta_index = track_projec
 path_index_start_open_loop_control = dy.sample_and_hold(tracked_index, event=dy.initial_event())
 path_distance_start_open_loop_control = dy.sample_and_hold(d_star, event=dy.initial_event())
 
-dy.append_primay_ouput(path_index_start_open_loop_control,    'path_index_start_open_loop_control')
-dy.append_primay_ouput(Delta_l, 'Delta_l')
+dy.append_output(path_index_start_open_loop_control,    'path_index_start_open_loop_control')
+dy.append_output(Delta_l, 'Delta_l')
 
 
 #
@@ -63,7 +63,7 @@ dy.append_primay_ouput(Delta_l, 'Delta_l')
 velocity = dy.euler_integrator(acceleration, Ts, initial_state=initial_velocity) * velocity_factor
 velocity = dy.saturate(velocity, lower_limit=0)
 
-dy.append_primay_ouput(velocity, 'velocity')
+dy.append_output(velocity, 'velocity')
 
 #
 # open-loop control
@@ -75,7 +75,7 @@ d_hat = dy.euler_integrator(velocity, Ts, initial_state=0) + path_distance_start
 # estimated travelled distance (d_hat) to path-index 
 open_loop_index, _, _ = tracker_distance_ahead(path, current_index=path_index_start_open_loop_control, distance_ahead=d_hat)
 
-dy.append_primay_ouput(open_loop_index,    'open_loop_index')
+dy.append_output(open_loop_index,    'open_loop_index')
 
 # get the reference orientation and curvature
 _, _, _, psi_rr, K_r = sample_path(path, index=open_loop_index + dy.int32(1) )  # new sampling
@@ -87,8 +87,8 @@ _, _, _, psi_rr, K_r = sample_path(path, index=open_loop_index + dy.int32(1) )  
 
 psi_r, psi_r_dot = compute_path_orientation_from_curvature( Ts, velocity, psi_rr, K_r, L=1.0 )
 
-dy.append_primay_ouput(psi_rr,    'psi_rr')
-dy.append_primay_ouput(psi_r_dot, 'psi_r_dot')
+dy.append_output(psi_rr,    'psi_rr')
+dy.append_output(psi_r_dot, 'psi_r_dot')
 
 
 # feedback of internal model
@@ -103,11 +103,11 @@ Delta_u = dy.float64(0.0)
 steering =  psi_r - psi_feedback + Delta_u
 steering = dy.unwrap_angle(angle=steering, normalize_around_zero = True)
 
-dy.append_primay_ouput(Delta_u, 'Delta_u')
+dy.append_output(Delta_u, 'Delta_u')
 
 # internal model of carbody rotation (from bicycle model)
 psi_mdl << dy.euler_integrator( velocity * dy.float64(1.0 / wheelbase) * dy.sin(steering), Ts, initial_state=psi_measurement )
-dy.append_primay_ouput(psi_mdl, 'psi_mdl')
+dy.append_output(psi_mdl, 'psi_mdl')
 
 
 
@@ -129,7 +129,7 @@ x_, y_, psi_real, *_ = lateral_vehicle_model(u_delta=steering, v=velocity, v_dot
 psi_ofs = dy.euler_integrator(IMU_drift, Ts, initial_state=0)
 psi_measurement_ = psi_real + psi_ofs
 
-dy.append_primay_ouput(psi_measurement_, 'psi_measurement')
+dy.append_output(psi_measurement_, 'psi_measurement')
 
 # close the feedback loops
 x_real << x_
@@ -140,18 +140,18 @@ psi_measurement << psi_measurement_
 # outputs: these are available for visualization in the html set-up
 #
 
-dy.append_primay_ouput(x_real, 'x')
-dy.append_primay_ouput(y_real, 'y')
-dy.append_primay_ouput(psi_real, 'psi_real')
+dy.append_output(x_real, 'x')
+dy.append_output(y_real, 'y')
+dy.append_output(psi_real, 'psi_real')
 
-dy.append_primay_ouput(steering, 'steering')
+dy.append_output(steering, 'steering')
 
-dy.append_primay_ouput(x_r, 'x_r')
-dy.append_primay_ouput(y_r, 'y_r')
-dy.append_primay_ouput(psi_r, 'psi_r')
+dy.append_output(x_r, 'x_r')
+dy.append_output(y_r, 'y_r')
+dy.append_output(psi_r, 'psi_r')
 
 
-dy.append_primay_ouput(tracked_index, 'tracked_index')
+dy.append_output(tracked_index, 'tracked_index')
 
 
 # generate code for Web Assembly (wasm), requires emcc (emscripten) to build

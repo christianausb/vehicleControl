@@ -47,10 +47,10 @@ x, y, psi, x_dot, y_dot, psi_dot = discrete_time_bicycle_model(delta, velocity, 
 # outputs: these are available for visualization in the html set-up
 #
 
-dy.append_primay_ouput(x, 'x')
-dy.append_primay_ouput(y, 'y')
-dy.append_primay_ouput(psi, 'psi')
-dy.append_primay_ouput(delta, 'steering')
+dy.append_output(x, 'x')
+dy.append_output(y, 'y')
+dy.append_output(psi, 'psi')
+dy.append_output(delta, 'steering')
 
 # generate code for Web Assembly (wasm), requires emcc (emscripten) to build
 code_gen_results = dy.generate_code(template=dy.TargetWasm(enable_tracing=False), folder="generated/bicycle_model", build=True)

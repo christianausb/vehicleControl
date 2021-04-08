@@ -41,7 +41,7 @@ y   = dy.signal()
 psi = dy.signal()
 
 # track the evolution of the closest point on the path to the vehicles position
-d_star, x_r, y_r, psi_rr, K_r, Delta_l, tracked_index, Delta_index = track_projection_on_path(path, x, y)
+d_star, x_r, y_r, psi_rr, K_r, Delta_l, tracked_index, Delta_index, _ = track_projection_on_path(path, x, y)
 
 #
 # project the vehicle velocity onto the path yielding v_star 
@@ -53,7 +53,7 @@ d_star, x_r, y_r, psi_rr, K_r, Delta_l, tracked_index, Delta_index = track_proje
 Delta_u = dy.signal() # feedback from control
 v_star = project_velocity_on_path(velocity, Delta_u, Delta_l, K_r)
 
-dy.append_primay_ouput(v_star,     'v_star')
+dy.append_output(v_star,     'v_star')
 
 #
 # compute an enhanced (less noise) signal for the path orientation psi_r by integrating the 
@@ -62,13 +62,13 @@ dy.append_primay_ouput(v_star,     'v_star')
 
 psi_r, psi_r_dot = compute_path_orientation_from_curvature( Ts, v_star, psi_rr, K_r, L=1.0 )
 
-dy.append_primay_ouput(psi_rr,    'psi_rr')
-dy.append_primay_ouput(psi_r_dot, 'psi_r_dot')
+dy.append_output(psi_rr,    'psi_rr')
+dy.append_output(psi_r_dot, 'psi_r_dot')
 
 # reference for the lateral distance
 Delta_l_r = dy.float64(0.0) # zero in this example
 
-dy.append_primay_ouput(Delta_l_r, 'Delta_l_r')
+dy.append_output(Delta_l_r, 'Delta_l_r')
 
 # feedback control
 u = dy.PID_controller(r=Delta_l_r, y=Delta_l, Ts=0.01, kp=k_p)
@@ -79,7 +79,7 @@ Delta_u << dy.asin( dy.saturate(u / velocity, -0.99, 0.99) )
 steering =  psi_r - psi + Delta_u
 steering = dy.unwrap_angle(angle=steering, normalize_around_zero = True)
 
-dy.append_primay_ouput(Delta_u, 'Delta_u')
+dy.append_output(Delta_u, 'Delta_u')
 
 
 #
@@ -110,25 +110,25 @@ psi << psi_
 # outputs: these are available for visualization in the html set-up
 #
 
-dy.append_primay_ouput(x, 'x')
-dy.append_primay_ouput(y, 'y')
-dy.append_primay_ouput(psi, 'psi')
+dy.append_output(x, 'x')
+dy.append_output(y, 'y')
+dy.append_output(psi, 'psi')
 
-dy.append_primay_ouput(steering, 'steering')
+dy.append_output(steering, 'steering')
 
-dy.append_primay_ouput(x_r, 'x_r')
-dy.append_primay_ouput(y_r, 'y_r')
-dy.append_primay_ouput(psi_r, 'psi_r')
+dy.append_output(x_r, 'x_r')
+dy.append_output(y_r, 'y_r')
+dy.append_output(psi_r, 'psi_r')
 
-dy.append_primay_ouput(Delta_l, 'Delta_l')
+dy.append_output(Delta_l, 'Delta_l')
 
-dy.append_primay_ouput(steering_disturbance, 'steering_disturbance')
-dy.append_primay_ouput(disturbed_steering, 'disturbed_steering')
+dy.append_output(steering_disturbance, 'steering_disturbance')
+dy.append_output(disturbed_steering, 'disturbed_steering')
 
-dy.append_primay_ouput(tracked_index, 'tracked_index')
-dy.append_primay_ouput(Delta_index, 'Delta_index')
+dy.append_output(tracked_index, 'tracked_index')
+dy.append_output(Delta_index, 'Delta_index')
 
-#dy.append_primay_ouput(dy.delay(velocity),   'velocity') # NOTE: confuses ORTD...
+#dy.append_output(dy.delay(velocity),   'velocity') # NOTE: confuses ORTD...
 
 
 # generate code for Web Assembly (wasm), requires emcc (emscripten) to build

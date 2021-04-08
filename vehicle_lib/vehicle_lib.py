@@ -4,7 +4,7 @@ from scipy import signal
 import openrtdynamics2.lang as dy
 
 """
-A library for modelling and control of vehicles than can be descirbed by the kinematic bicycle model.
+A library for modelling and control of vehicles that can be descirbed by the kinematic bicycle model.
 
 The methods are based on the paper
 
@@ -178,7 +178,7 @@ def discrete_time_bicycle_model(delta, v, Ts, wheelbase, x0=0.0, y0=0.0, psi0=0.
 
     return x, y, psi, x_dot, y_dot, psi_dot
 
-def compute_accelearation( v, v_dot, delta, delta_dot, psi_dot ):
+def compute_acceleration( v, v_dot, delta, delta_dot, psi_dot ):
     """
         Compute the acceleration at the front axle
     """
@@ -215,7 +215,7 @@ def lateral_vehicle_model(u_delta, v, v_dot, Ts, wheelbase, x0=0.0, y0=0.0, psi0
     delta = dy.delay( delta, delta0 )
 
     # compute acceleration in the point (x,y) in the vehicle frame
-    a_lat, a_long = compute_accelearation( v, v_dot, delta, delta_dot, psi_dot )
+    a_lat, a_long = compute_acceleration( v, v_dot, delta, delta_dot, psi_dot )
 
     return x, y, psi, delta, delta_dot, a_lat, a_long, x_dot, y_dot, psi_dot
 
