@@ -2,6 +2,7 @@ import math
 import numpy as np
 from scipy import signal
 import openrtdynamics2.lang as dy
+import openrtdynamics2.lang.circular_buffer as cb
 
 """
 A library for modelling and control of vehicles that can be descirbed by the kinematic bicycle model.
@@ -34,6 +35,8 @@ def import_path_data(data):
     """
     # distance on path (D), position (X/Y), path orientation (PSI), curvature (K)
     path = {}
+    path['buffer_type']   = 'dy.memory'
+
     path['D']   = dy.memory(datatype=dy.DataTypeFloat64(1), constant_array=data['D'] )
     path['X']   = dy.memory(datatype=dy.DataTypeFloat64(1), constant_array=data['X'] )
     path['Y']   = dy.memory(datatype=dy.DataTypeFloat64(1), constant_array=data['Y'] )
@@ -45,39 +48,118 @@ def import_path_data(data):
     return path
 
 
+def create_path_horizon(horizon_length : int = 100):
+
+    # distance on path (D), position (X/Y), path orientation (PSI), curvature (K)
+    path = {}
+    path['buffer_type']   = 'circular_buffer'
+
+    path['D']   = cb.new_circular_buffer_float64( horizon_length )
+    path['X']   = cb.new_circular_buffer_float64( horizon_length )
+    path['Y']   = cb.new_circular_buffer_float64( horizon_length )
+    path['PSI'] = cb.new_circular_buffer_float64( horizon_length )
+    path['K']   = cb.new_circular_buffer_float64( horizon_length )
+
+    path['horizon_length'] = horizon_length
+
+    return path
+
+def append_to_path_horizon(path, path_sample):
+    """
+        Append one sample to the path horizon
+    """
+
+#    d, x, y, psi, K = path_sample
+
+    cb.append_to_buffer( path['D'],   path_sample['d']   )
+    cb.append_to_buffer( path['X'],   path_sample['x']   )
+    cb.append_to_buffer( path['Y'],   path_sample['y']   )
+    cb.append_to_buffer( path['PSI'], path_sample['psi'] )
+    cb.append_to_buffer( path['K'],   path_sample['K']   )
+
+def path_horizon_head_index(path):
+    """
+        Get the current head-index position in the horizon and the distance at the head
+    """
+
+    head_index = cb.get_current_absolute_write_index(path['D']) - 1
+    distance_at_the_end_of_horizon = cb.read_from_absolute_index(path['D'], head_index)
+
+    return head_index, distance_at_the_end_of_horizon
+
+
+
 def sample_path(path, index):
     """
         Read a sample of the given path at a given array-index
     """
 
-    d   = dy.memory_read( memory=path['D'], index=index ) 
-    y   = dy.memory_read( memory=path['Y'], index=index ) 
-    x   = dy.memory_read( memory=path['X'], index=index ) 
-    psi = dy.memory_read( memory=path['PSI'], index=index )
-    K   = dy.memory_read( memory=path['K'], index=index )
+    if path['buffer_type']  == 'dy.memory':
+        d   = dy.memory_read( memory=path['D'],   index=index ) 
+        x   = dy.memory_read( memory=path['X'],   index=index ) 
+        y   = dy.memory_read( memory=path['Y'],   index=index ) 
+        psi = dy.memory_read( memory=path['PSI'], index=index )
+        K   = dy.memory_read( memory=path['K'],   index=index )
 
-    return d, x, y, psi, K
+        return d, x, y, psi, K
+
+    elif path['buffer_type']  == 'circular_buffer':
+        d   = cb.read_from_absolute_index(path['D'],   index)
+        x   = cb.read_from_absolute_index(path['X'],   index)
+        y   = cb.read_from_absolute_index(path['Y'],   index)
+        psi = cb.read_from_absolute_index(path['PSI'], index)
+        K   = cb.read_from_absolute_index(path['K'],   index)
+
+        return d, x, y, psi, K
 
 def sample_path_xy(path, index):
     """
         Read a sample (x,y) of the given path at a given array-index
     """
 
-    y   = dy.memory_read( memory=path['Y'], index=index ) 
-    x   = dy.memory_read( memory=path['X'], index=index ) 
+    if path['buffer_type']  == 'dy.memory':
+        y   = dy.memory_read( memory=path['Y'], index=index ) 
+        x   = dy.memory_read( memory=path['X'], index=index ) 
 
-    return x, y
+        return x, y
+
+    elif path['buffer_type']  == 'circular_buffer':
+        x   = cb.read_from_absolute_index(path['X'],   index)
+        y   = cb.read_from_absolute_index(path['Y'],   index)
+
+        return x, y
+
+def sample_path_d(path, index):
+    """
+        Read a sample (d) of the given path at a given array-index
+    """
+
+    if path['buffer_type']  == 'dy.memory':
+        d   = dy.memory_read( memory=path['D'], index=index ) 
+
+        return d
+
+    elif path['buffer_type']  == 'circular_buffer':
+        d   = cb.read_from_absolute_index(path['D'],   index)
+
+        return d
+
+
 
 def sample_path_finite_difference(path, index):
     """
         Compute path orientation angle form x/y data only using finite differences
     """
 
-    y1 = dy.memory_read( memory=path['Y'], index=index ) 
-    y2 = dy.memory_read( memory=path['Y'], index=index + dy.int32(1) )
+    # y1 = dy.memory_read( memory=path['Y'], index=index ) 
+    # y2 = dy.memory_read( memory=path['Y'], index=index + dy.int32(1) )
 
-    x1 = dy.memory_read( memory=path['X'], index=index ) 
-    x2 = dy.memory_read( memory=path['X'], index=index + dy.int32(1) )
+    # x1 = dy.memory_read( memory=path['X'], index=index ) 
+    # x2 = dy.memory_read( memory=path['X'], index=index + dy.int32(1) )
+
+
+    x1, y1 = sample_path_xy(path, index)
+    x2, y2 = sample_path_xy(path, index + 1)
 
     Delta_x = x2 - x1
     Delta_y = y2 - y1
@@ -245,8 +327,10 @@ def tracker(path, x, y):
         Delta_index = dy.sum(search_index_increment, initial_state=-1 )
         Delta_index_previous_step = Delta_index - search_index_increment
 
-        x_test = dy.memory_read( memory=path['X'], index=index_track + Delta_index ) 
-        y_test = dy.memory_read( memory=path['Y'], index=index_track + Delta_index )
+        # x_test = dy.memory_read( memory=path['X'], index=index_track + Delta_index ) 
+        # y_test = dy.memory_read( memory=path['Y'], index=index_track + Delta_index )
+
+        x_test, y_test = sample_path_xy(path, index_track + Delta_index)
 
         distance = distance_between( x_test, y_test, x, y )
 
@@ -450,12 +534,13 @@ def tracker_distance_ahead(path, current_index, distance_ahead):
         # computation can be simplified
         pass
 
-    target_distance = dy.float64(distance_ahead) + dy.memory_read( memory=path['D'], index=current_index )
-
+    # target_distance = dy.float64(distance_ahead) + dy.memory_read( memory=path['D'], index=current_index )
+    target_distance = dy.float64(distance_ahead) + sample_path_d(path, current_index)
 
     def J( index ):
 
-        d_test = dy.memory_read( memory=path['D'], index=index ) 
+        # d_test = dy.memory_read( memory=path['D'], index=index ) 
+        d_test = sample_path_d(path, index)
         distance = dy.abs( d_test - target_distance )
 
         return distance
@@ -716,21 +801,90 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
 
 
     # collect resulting signals
-    results['x_r']       = x_r          # the current x-position of the closest point on the reference path
-    results['y_r']       = y_r          # the current y-position of the closest point on the reference path
-    results['v_star']    = v_star       # the current velocity of the closest point on the reference path
-    results['d_star']    = d_star       # the current distance parameter of the closest point on the reference path
-    results['psi_r']     = psi_r        # the current path-tangent orientation angle in the closest point on the reference path
-    results['psi_r_dot'] = psi_r_dot    # the time derivative of psi_r
-    results['Delta_l_r'] = Delta_l_r    # the reference to the distance to the path
-    results['Delta_l']   = Delta_l      # the distance to the closest point on the reference path
-    results['Delta_u']   = Delta_u      # small steering delta
-    results['delta']     = delta        # the requested steering angle / the control variable 
+    results['x_r']           = x_r          # the current x-position of the closest point on the reference path
+    results['y_r']           = y_r          # the current y-position of the closest point on the reference path
+    results['v_star']        = v_star       # the current velocity of the closest point on the reference path
+    results['d_star']        = d_star       # the current distance parameter of the closest point on the reference path
+    results['psi_r']         = psi_r        # the current path-tangent orientation angle in the closest point on the reference path
+    results['psi_r_dot']     = psi_r_dot    # the time derivative of psi_r
+    results['Delta_l_r']     = Delta_l_r    # the reference to the distance to the path
+    results['Delta_l']       = Delta_l      # the distance to the closest point on the reference path
+    results['Delta_u']       = Delta_u      # small steering delta
+    results['delta']         = delta        # the requested steering angle / the control variable 
+
+    results['tracked_index'] = tracked_index
 
     results['line_tracking_internals']     = line_tracking_internals 
     
     return results
 
+
+
+
+def path_lateral_modification2(Ts, wheelbase, input_path, velocity, Delta_l_r, Delta_l_r_dot, Delta_l_r_dotdot):
+    """
+        Take an input path, modify it according to a given lateral distance profile,
+        and generate a new path.
+    """
+    # create placeholders for the plant output signals
+    x       = dy.signal()
+    y       = dy.signal()
+    psi     = dy.signal()
+    psi_dot = dy.signal()
+
+
+
+
+    results = path_following_controller_P(
+        input_path,
+        x, y, psi, 
+        velocity, 
+        Delta_l_r=Delta_l_r, 
+        Delta_l_r_dot=Delta_l_r_dot,
+        Delta_l_r_dotdot=Delta_l_r_dotdot,
+        psi_dot=psi_dot,
+        velocity_dot=dy.float64(0),
+        Ts = Ts,
+        k_p = 1
+    )
+
+    # driven distance
+    d = dy.euler_integrator(velocity, Ts)
+
+
+    #
+    # The model of the vehicle including a disturbance
+    #
+
+    # steering angle limit
+    limited_steering = dy.saturate(u=results['delta'], lower_limit=-math.pi/2.0, upper_limit=math.pi/2.0)
+
+    # the model of the vehicle
+    x_, y_, psi_, x_dot, y_dot, psi_dot_ = discrete_time_bicycle_model(limited_steering, velocity, Ts, wheelbase)
+
+    # driven distance
+    d = dy.euler_integrator(velocity, Ts)
+
+
+    # close the feedback loops
+    x       << x_
+    y       << y_
+    psi     << psi_
+    psi_dot << psi_dot_
+
+
+    #
+    output_path = {
+        'd'   : d,
+        'x'   : x,
+        'y'   : y,
+        'psi' : psi     + results['delta'],
+        'K'   : psi_dot + results['delta_dot'],
+        'd_star' : results['d_star'],
+        'tracked_index' : results['tracked_index']
+    }
+    
+    return output_path
 
 
 #
