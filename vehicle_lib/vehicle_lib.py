@@ -3,6 +3,7 @@ import numpy as np
 from scipy import signal
 import openrtdynamics2.lang as dy
 import openrtdynamics2.lang.circular_buffer as cb
+import matplotlib.pyplot as plt
 
 """
 A library for modelling and control of vehicles that can be descirbed by the kinematic bicycle model.
@@ -186,6 +187,31 @@ def sample_path_linear_interpolation(path, i_s, i_e, interpolation_factor):
 
     return d, x, y, psi, K
 
+
+
+def plot_path(path):
+   # time = make_time(Ts, path_x)
+
+    plt.figure(figsize=(12,8), dpi=70)
+    plt.plot( path['X'], path['Y'] )
+    plt.show()
+
+    plt.figure(figsize=(12,8), dpi=70)
+    plt.plot(path['D'], np.rad2deg( path['PSI'] ))
+    plt.plot(path['D'], np.rad2deg( path['K'] ))
+    plt.legend(['angle (delta)', 'rate (delta_dot)'])
+    plt.show()
+
+    if 'DELTA' in path and 'DELTA_DOT' in path:
+        plt.figure(figsize=(12,8), dpi=70)
+        plt.plot(path['D'], np.rad2deg( path['DELTA'] ))
+        plt.plot(path['D'], np.rad2deg( path['DELTA_DOT'] ))
+        plt.legend(['steering angle (delta)', 'steering rate (delta_dot)'])
+        plt.show()
+
+
+    
+
 #
 # geometry
 #
@@ -320,7 +346,7 @@ def tracker(path, x, y):
     """
     index_track   = dy.signal()
 
-    with dy.sub_loop( max_iterations=1000 ) as system:
+    with dy.sub_loop( max_iterations=200, subsystem_name='tracker_loop' ) as system:
 
         search_index_increment = dy.int32(1) # positive increment assuming positive velocity
 
@@ -848,9 +874,6 @@ def path_lateral_modification2(Ts, wheelbase, input_path, velocity, Delta_l_r, D
         k_p = 1
     )
 
-    # driven distance
-    d = dy.euler_integrator(velocity, Ts)
-
 
     #
     # The model of the vehicle including a disturbance
@@ -882,6 +905,79 @@ def path_lateral_modification2(Ts, wheelbase, input_path, velocity, Delta_l_r, D
         'K'   : psi_dot + results['delta_dot'],
         'd_star' : results['d_star'],
         'tracked_index' : results['tracked_index']
+    }
+    
+    return output_path
+
+
+# TODO: remove 
+def path_lateral_modification2___(Ts, wheelbase, input_path, velocity, Delta_l_r, Delta_l_r_dot, Delta_l_r_dotdot):
+    """
+        Take an input path, modify it according to a given lateral distance profile,
+        and generate a new path.
+    """
+    # create placeholders for the plant output signals
+    x       = dy.signal()
+    y       = dy.signal()
+    psi     = dy.signal()
+    psi_dot = dy.signal()
+
+
+
+
+    results = path_following_controller_P(
+        input_path,
+        x, y, psi, 
+        velocity, 
+        Delta_l_r=Delta_l_r, 
+        Delta_l_r_dot=Delta_l_r_dot,
+        Delta_l_r_dotdot=Delta_l_r_dotdot,
+        psi_dot=psi_dot,
+        velocity_dot=dy.float64(0),
+        Ts = Ts,
+        k_p = 1
+    )
+
+
+    #
+    # The model of the vehicle including a disturbance
+    #
+
+    # steering angle limit
+    limited_steering = dy.saturate(u = results['delta'], lower_limit=-math.pi/2.0, upper_limit=math.pi/2.0)
+
+    # # the model of the vehicle
+    x_, y_, psi_, x_dot, y_dot, psi_dot_ = discrete_time_bicycle_model(limited_steering, velocity, Ts, wheelbase)
+
+    # driven distance
+    d = dy.euler_integrator(velocity, Ts)
+
+
+    # close the feedback loops
+    x       << x_
+    y       << y_
+    psi     << psi_
+    psi_dot << psi_dot_
+
+  #  x,y = sample_path_xy(input_path, dy.counter())
+
+
+   # print( 'x', x )
+
+    #
+    output_path = {
+        'd'   : d.set_name('d_distance'),
+        'x'   : x, # dy.float64(1).set_name('x'),
+        'y'   : y, # dy.float64(2).set_name('y'),
+
+        # 'psi' : dy.float64(3).set_name('psi'),
+        'K'   : dy.float64(4).set_name('K'),
+
+        'psi' : psi     + results['delta'],
+        # 'K'   : psi_dot + results['delta_dot'],
+
+        'd_star' : d * 1.1,
+        'tracked_index' : dy.counter()
     }
     
     return output_path
