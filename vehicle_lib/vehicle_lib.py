@@ -83,8 +83,13 @@ def path_horizon_head_index(path):
         Get the current head-index position in the horizon and the distance at the head
     """
 
-    head_index = cb.get_current_absolute_write_index(path['D']) - 1
-    distance_at_the_end_of_horizon = cb.read_from_absolute_index(path['D'], head_index)
+    if path['buffer_type']  == 'dy.memory':
+        head_index                     = dy.int32( path['samples'] - 1 )
+        distance_at_the_end_of_horizon = dy.memory_read( memory=path['D'],   index=head_index ) 
+
+    elif path['buffer_type']  == 'circular_buffer':
+        head_index                     = cb.get_current_absolute_write_index(path['D']) - 1
+        distance_at_the_end_of_horizon = cb.read_from_absolute_index(path['D'], head_index)
 
     return head_index, distance_at_the_end_of_horizon
 
@@ -171,6 +176,8 @@ def sample_path_finite_difference(path, index):
 
     return x_r, y_r, psi_r
 
+
+
 def linear_interpolation(v1, v2, interpolation_factor):
     return v1 + (v2 - v1) * interpolation_factor
 
@@ -186,6 +193,8 @@ def sample_path_linear_interpolation(path, i_s, i_e, interpolation_factor):
     K   = linear_interpolation( K_s,   K_e,   interpolation_factor )
 
     return d, x, y, psi, K
+
+
 
 
 
@@ -339,12 +348,19 @@ def tracker(path, x, y):
 
         This is an internal function. C.f. track_projection_on_path for details and assumptions.
 
-        returns
-            index_track_next - the index in the path array for the closest distance to (x, y)
+        returns in structure tracking_results:
+            tracked_index    - the index in the path array for the closest distance to (x, y)
             Delta_index      - the change of the index to the previous lookup
             distance         - the absolute value of the closest distance of (x, y) to the path
+
+            reached_the_end_of_currently_available_path_data
+                             - reached the end of the path
     """
-    index_track   = dy.signal()
+    index_head, _ = path_horizon_head_index(path)
+    index_head.set_name('index_head')
+
+    # the index that currently describes the index on the path with the closest distance to (x,y)
+    index_track = dy.signal().set_name('index_track')
 
     with dy.sub_loop( max_iterations=200, subsystem_name='tracker_loop' ) as system:
 
@@ -353,35 +369,51 @@ def tracker(path, x, y):
         Delta_index = dy.sum(search_index_increment, initial_state=-1 )
         Delta_index_previous_step = Delta_index - search_index_increment
 
-        # x_test = dy.memory_read( memory=path['X'], index=index_track + Delta_index ) 
-        # y_test = dy.memory_read( memory=path['Y'], index=index_track + Delta_index )
-
-        x_test, y_test = sample_path_xy(path, index_track + Delta_index)
-
-        distance = distance_between( x_test, y_test, x, y )
+        # the index at which to compute the distance to and see if it is the minimum 
+        index_to_investigate  = index_track + Delta_index
+        x_test, y_test        = sample_path_xy(path, index_to_investigate)
+        distance              = distance_between( x_test, y_test, x, y )
 
         distance_previous_step = dy.delay(distance, initial_state=100000)
         minimal_distance_reached = distance_previous_step < distance
 
         # introduce signal names
-        distance.set_name('tracker_distance')
+        distance.set_name('distance')
         minimal_distance_reached.set_name('minimal_distance_reached')
 
         # break condition
-        system.loop_until( minimal_distance_reached )
+        reached_the_end_of_currently_available_path_data = index_to_investigate >= index_head # reached the end of the input data?
+        system.loop_until( dy.logic_or( minimal_distance_reached, reached_the_end_of_currently_available_path_data ) )
 
         # return        
-        system.set_outputs([ Delta_index_previous_step, distance_previous_step ])
+        system.set_outputs([ 
+            Delta_index_previous_step.set_name('Delta_index_previous_step'),
+            distance_previous_step.set_name('distance_previous_step'),
+            minimal_distance_reached.set_name('minimal_distance_reached'), 
+            reached_the_end_of_currently_available_path_data.set_name('reached_the_end_of_currently_available_path_data')
+        ])
 
 
-    Delta_index = system.outputs[0].set_name('tracker_Delta_index')
-    distance = system.outputs[1].set_name('distance')
+    Delta_index                                      = system.outputs[0].set_name('tracker_Delta_index')
+    distance                                         = system.outputs[1].set_name('distance')
+    minimal_distance_reached                         = system.outputs[2].set_name('minimal_distance_reached')
+    reached_the_end_of_currently_available_path_data = system.outputs[3].set_name('reached_the_end_of_currently_available_path_data')
 
+    # update current state of index_track 
     index_track_next = index_track + Delta_index 
-
     index_track << dy.delay(index_track_next, initial_state=1)
 
-    return index_track_next, Delta_index, distance
+    #
+    tracking_results = dy.structure()
+    tracking_results['tracked_index']                                    = index_track_next
+    tracking_results['Delta_index']                                      = Delta_index
+    tracking_results['distance']                                         = distance
+    tracking_results['minimal_distance_reached']                         = minimal_distance_reached
+    tracking_results['reached_the_end_of_currently_available_path_data'] = reached_the_end_of_currently_available_path_data
+
+    # return index_track_next, Delta_index, distance, minimal_distance_reached, reached_the_end_of_currently_available_path_data
+
+    return tracking_results
 
 
 
@@ -444,7 +476,7 @@ def _distance_to_Delta_l( distance, psi_r, x_r, y_r, x, y ):
     return Delta_l
 
 
-def track_projection_on_path(path, x, y, use_linear_interpolation_in_sampling=True):
+def track_projection_on_path(path, x, y, tracking_results=None, use_linear_interpolation_in_sampling=True):
     """
         Project the point (x, y) onto the given path (closest distance) yielding the parameter d_star.
         Return the properties of the path at d_star. Dynamic changes in (x, y) are continuously tracked.
@@ -471,12 +503,21 @@ def track_projection_on_path(path, x, y, use_linear_interpolation_in_sampling=Tr
     """
 
     # track the evolution of the closest point on the path to the vehicles position
-    tracked_index, Delta_index, closest_distance = tracker(path, x, y)
+    # tracked_index, Delta_index, closest_distance, minimal_distance_reached, reached_the_end_of_currently_available_path_data = tracker(path, x, y)
+
+    # tr - tracking_results
+    if tracking_results is not None:
+        # using external tracker
+        tr = tracking_results
+
+    else:
+        # using internal tracker
+        tr = tracker(path, x, y)
 
     # The index 'tracked_index' is the index referring to the closest point to the path.
     # Now, find the index of the 2nd closest point
 
-    i_s, i_e, x_s, y_s, x_e, y_e, index_2nd_closest, _ = _get_line_segment( path, x, y, tracked_index )
+    i_s, i_e, x_s, y_s, x_e, y_e, index_2nd_closest, _ = _get_line_segment( path, x, y, tr['tracked_index'] )
 
     if use_linear_interpolation_in_sampling:
         # use linear interpolation of the line between the path xy-samples
@@ -501,7 +542,7 @@ def track_projection_on_path(path, x, y, use_linear_interpolation_in_sampling=Tr
     # compute the distance to closest sample
     #
 
-    Delta_l_closest_path_sample = _distance_to_Delta_l( closest_distance, psi_rr, x_r, y_r, x, y )
+    Delta_l_closest_path_sample = _distance_to_Delta_l( tr['distance'], psi_rr, x_r, y_r, x, y )
 
 
     # Finally assign the best estimate of the lateral distance to the path
@@ -532,10 +573,26 @@ def track_projection_on_path(path, x, y, use_linear_interpolation_in_sampling=Tr
     internals['Delta_l_closest_path_sample'] = Delta_l_closest_path_sample
 
     internals['i_star_2']    = index_2nd_closest
-    internals['i_star']      = tracked_index
-    internals['Delta_index'] = Delta_index
+    #internals['i_star']      = tr['tracked_index']
+    #internals['Delta_index'] = tr['Delta_index'] 
 
-    return d_star, x_r, y_r, psi_rr, K_r, Delta_l, tracked_index, Delta_index, internals
+    #
+    sample = {}
+    sample['d_star']  = d_star
+    sample['x_r']     = x_r
+    sample['y_r']     = y_r
+    sample['psi_rr']  = psi_rr
+    sample['K_r']     = K_r
+    sample['Delta_l'] = Delta_l
+
+    sample['tracked_index'] = tr['tracked_index']
+    sample['Delta_index']   = tr['Delta_index']
+
+    sample['internals']   = internals
+
+    #return d_star, x_r, y_r, psi_rr, K_r, Delta_l, tr['tracked_index'], tr['Delta_index'], internals
+
+    return sample
 
 
 
@@ -770,78 +827,113 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
         in case of strong feedback control activity.  
 
     """
+    index_head, _ = path_horizon_head_index(path)
+
     # structure for output signals
-    results = {}
+    results = dy.structure()
+
+
 
     # track the evolution of the closest point on the path to the vehicles position
-    d_star, x_r, y_r, psi_rr, K_r, Delta_l, tracked_index, Delta_index, line_tracking_internals = track_projection_on_path(path, x, y)
+    with dy.sub_if( index_head > 10 ) as system:
 
-    #
-    # project the vehicle velocity onto the path yielding v_star 
-    #
-    # Used formula inside project_velocity_on_path:
-    #   v_star = d d_star / dt = v * cos( Delta_u ) / ( 1 - Delta_l * K(d_star) ) 
-    #
+        tracking_results = tracker(path, x, y)
 
-    Delta_u = dy.signal() # feedback from control
-    v_star = project_velocity_on_path(velocity, Delta_u, Delta_l, K_r)
+        system.set_outputs( tracking_results.to_list() )
+
+    tracking_results.replace_signals( system.outputs )
 
 
-    #
-    # compute an enhanced (less noise) signal for the path orientation psi_r by integrating the 
-    # curvature profile and fusing the result with psi_rr to mitigate the integration drift.
-    #
 
-    psi_r, psi_r_dot = compute_path_orientation_from_curvature( Ts, v_star, psi_rr, K_r, L=1.0 )
-    
-    # feedback control
-    u_fb = k_p * (Delta_l_r - Delta_l)
+    position_on_path_found    = tracking_results['minimal_distance_reached']
+    need_more_path_input_data = tracking_results['reached_the_end_of_currently_available_path_data']
+    output_valid              = position_on_path_found
 
-    if Delta_l_r_dot is not None:
-        u = Delta_l_r_dot + u_fb
-    else:
-        u = u_fb
 
-    # path tracking
-    # resulting lateral model u --> Delta_l : 1/s
-    Delta_u << dy.asin( dy.saturate(u / velocity, -0.99, 0.99) )
-    delta = dy.unwrap_angle(angle=psi_r - psi + Delta_u, normalize_around_zero = True)
+    # position_on_path_found = dy.boolean(True)
 
-    # derivatives
-    if psi_dot is not None and Delta_l_r_dot is not None and velocity_dot is not None and Delta_l_r_dotdot is not None:
+    with dy.sub_if( position_on_path_found, prevent_output_computation=False, subsystem_name='controller') as system:
+
+        # ps - path sample
+        ps = track_projection_on_path(path, x, y, tracking_results = tracking_results)
+
+        #
+        # project the vehicle velocity onto the path yielding v_star 
+        #
+        # Used formula inside project_velocity_on_path:
+        #   v_star = d d_star / dt = v * cos( Delta_u ) / ( 1 - Delta_l * K(d_star) ) 
+        #
+
+        Delta_u = dy.signal() # feedback from control
+        v_star = project_velocity_on_path(velocity, Delta_u, ps['Delta_l'], ps['K_r'])
+
+
+        #
+        # compute an enhanced (less noise) signal for the path orientation psi_r by integrating the 
+        # curvature profile and fusing the result with psi_rr to mitigate the integration drift.
+        #
+
+        psi_r, psi_r_dot = compute_path_orientation_from_curvature( Ts, v_star, ps['psi_rr'], ps['K_r'], L=1.0 )
         
-        if Delta_l_dot is None:
-            u_dot = Delta_l_r_dotdot # + 0 neglect numerical random walk error compensation 
+        # feedback control
+        u_fb = k_p * (Delta_l_r - ps['Delta_l'])
+
+        if Delta_l_r_dot is not None:
+            u = Delta_l_r_dot + u_fb
         else:
-            u_dot = Delta_l_r_dotdot + Delta_l_dot
+            u = u_fb
+
+        # path tracking
+        # resulting lateral model u --> Delta_l : 1/s
+        Delta_u << dy.asin( dy.saturate(u / velocity, -0.99, 0.99) )
+        delta = dy.unwrap_angle(angle=psi_r - psi + Delta_u, normalize_around_zero = True)
+
+        # compute the derivatives of the steering angle (steering rate)
+        if psi_dot is not None and Delta_l_r_dot is not None and velocity_dot is not None and Delta_l_r_dotdot is not None:
+            
+            if Delta_l_dot is None:
+                u_dot = Delta_l_r_dotdot # + 0 neglect numerical random walk error compensation 
+            else:
+                u_dot = Delta_l_r_dotdot + Delta_l_dot
 
 
-        Delta_u_dot = dy.cos( u / velocity ) * ( velocity * u_dot - velocity_dot * u ) / ( velocity*velocity )
-        delta_dot = psi_r_dot - psi_dot + Delta_u_dot
+            Delta_u_dot = dy.cos( u / velocity ) * ( velocity * u_dot - velocity_dot * u ) / ( velocity*velocity )
+            delta_dot = psi_r_dot - psi_dot + Delta_u_dot
 
-        results['Delta_u_dot']       = Delta_u_dot
-        results['delta_dot']         = delta_dot
-
-
+            results['Delta_u_dot']       = Delta_u_dot
+            results['delta_dot']         = delta_dot
 
 
 
-    # collect resulting signals
-    results['x_r']           = x_r          # the current x-position of the closest point on the reference path
-    results['y_r']           = y_r          # the current y-position of the closest point on the reference path
-    results['v_star']        = v_star       # the current velocity of the closest point on the reference path
-    results['d_star']        = d_star       # the current distance parameter of the closest point on the reference path
-    results['psi_r']         = psi_r        # the current path-tangent orientation angle in the closest point on the reference path
-    results['psi_r_dot']     = psi_r_dot    # the time derivative of psi_r
-    results['Delta_l_r']     = Delta_l_r    # the reference to the distance to the path
-    results['Delta_l']       = Delta_l      # the distance to the closest point on the reference path
-    results['Delta_u']       = Delta_u      # small steering delta
-    results['delta']         = delta        # the requested steering angle / the control variable 
+        # collect resulting signals
+        results['x_r']           = ps['x_r']      # the current x-position of the closest point on the reference path
+        results['y_r']           = ps['y_r']      # the current y-position of the closest point on the reference path
+        results['v_star']        = v_star         # the current velocity of the closest point on the reference path
+        results['d_star']        = ps['d_star']   # the current distance parameter of the closest point on the reference path
+        results['psi_r']         = psi_r          # the current path-tangent orientation angle in the closest point on the reference path
+        results['psi_r_dot']     = psi_r_dot      # the time derivative of psi_r
+        results['Delta_l']       = ps['Delta_l']  # the distance to the closest point on the reference path
+        results['Delta_u']       = Delta_u        # small steering delta
+        results['delta']         = delta          # the requested steering angle / the control variable 
 
-    results['tracked_index'] = tracked_index
 
-    results['line_tracking_internals']     = line_tracking_internals 
-    
+        # results['line_tracking_internals']  = ps['internals']
+
+
+        # return
+        system.set_outputs( results.to_list() )
+    results.replace_signals( system.outputs )
+
+    results['tracked_index'] = tracking_results['tracked_index']
+    results['Delta_l_r']     = Delta_l_r      # the reference to the distance to the path
+
+    results['position_on_path_found']        = position_on_path_found
+    results['need_more_path_input_data']     = need_more_path_input_data
+    results['output_valid']                  = output_valid
+
+    results['read_position']         = results['tracked_index'] + 1
+    results['minimal_read_position'] = results['read_position'] - 100
+
     return results
 
 
@@ -865,13 +957,13 @@ def path_lateral_modification2(Ts, wheelbase, input_path, velocity, Delta_l_r, D
         input_path,
         x, y, psi, 
         velocity, 
-        Delta_l_r=Delta_l_r, 
-        Delta_l_r_dot=Delta_l_r_dot,
-        Delta_l_r_dotdot=Delta_l_r_dotdot,
-        psi_dot=psi_dot,
-        velocity_dot=dy.float64(0),
-        Ts = Ts,
-        k_p = 1
+        Delta_l_r        = Delta_l_r, 
+        Delta_l_r_dot    = Delta_l_r_dot,
+        Delta_l_r_dotdot = Delta_l_r_dotdot,
+        psi_dot          = dy.delay(psi_dot),
+        velocity_dot     = dy.float64(0),
+        Ts               = Ts,
+        k_p              = 1
     )
 
 
@@ -879,108 +971,63 @@ def path_lateral_modification2(Ts, wheelbase, input_path, velocity, Delta_l_r, D
     # The model of the vehicle including a disturbance
     #
 
-    # steering angle limit
-    limited_steering = dy.saturate(u=results['delta'], lower_limit=-math.pi/2.0, upper_limit=math.pi/2.0)
+    with dy.sub_if( results['output_valid'], prevent_output_computation=False, subsystem_name='simulation_model') as system:
 
-    # the model of the vehicle
-    x_, y_, psi_, x_dot, y_dot, psi_dot_ = discrete_time_bicycle_model(limited_steering, velocity, Ts, wheelbase)
+        results['output_valid'].set_name('output_valid')
 
-    # driven distance
-    d = dy.euler_integrator(velocity, Ts)
+        results['delta'].set_name('delta')
+
+        # steering angle limit
+        limited_steering = dy.saturate(u=results['delta'], lower_limit=-math.pi/2.0, upper_limit=math.pi/2.0)
+
+        # the model of the vehicle
+        x_, y_, psi_, x_dot, y_dot, psi_dot_ = discrete_time_bicycle_model(limited_steering, velocity, Ts, wheelbase)
+
+        # driven distance
+        d = dy.euler_integrator(velocity, Ts)
+
+
+        # 
+        model_outputs = dy.structure(
+            d       = d,
+            x       = x_,
+            y       = y_,
+            psi     = psi_,
+            psi_dot = dy.delay(psi_dot_) # NOTE: delay introduced to avoid algebraic loops
+        )
+        system.set_outputs(model_outputs.to_list())
+    model_outputs.replace_signals( system.outputs )
+
 
 
     # close the feedback loops
-    x       << x_
-    y       << y_
-    psi     << psi_
-    psi_dot << psi_dot_
-
+    x       << model_outputs['x']
+    y       << model_outputs['y']
+    psi     << model_outputs['psi']
+    psi_dot << model_outputs['psi_dot']
 
     #
-    output_path = {
-        'd'   : d,
-        'x'   : x,
-        'y'   : y,
+    output_path = dy.structure({
+        'd'   : model_outputs['d'],
+        'x'   : model_outputs['x'],
+        'y'   : model_outputs['y'],
+
         'psi' : psi     + results['delta'],
         'K'   : psi_dot + results['delta_dot'],
         'd_star' : results['d_star'],
-        'tracked_index' : results['tracked_index']
-    }
-    
+        'tracked_index' : results['tracked_index'],
+
+        'output_valid'              : results['output_valid'],
+        'position_on_path_found'    : results['position_on_path_found'],
+        'need_more_path_input_data' : results['need_more_path_input_data'],
+
+        'read_position'             : results['read_position'],
+        'minimal_read_position'     : results['minimal_read_position']
+    })
+
     return output_path
 
 
-# TODO: remove 
-def path_lateral_modification2___(Ts, wheelbase, input_path, velocity, Delta_l_r, Delta_l_r_dot, Delta_l_r_dotdot):
-    """
-        Take an input path, modify it according to a given lateral distance profile,
-        and generate a new path.
-    """
-    # create placeholders for the plant output signals
-    x       = dy.signal()
-    y       = dy.signal()
-    psi     = dy.signal()
-    psi_dot = dy.signal()
-
-
-
-
-    results = path_following_controller_P(
-        input_path,
-        x, y, psi, 
-        velocity, 
-        Delta_l_r=Delta_l_r, 
-        Delta_l_r_dot=Delta_l_r_dot,
-        Delta_l_r_dotdot=Delta_l_r_dotdot,
-        psi_dot=psi_dot,
-        velocity_dot=dy.float64(0),
-        Ts = Ts,
-        k_p = 1
-    )
-
-
-    #
-    # The model of the vehicle including a disturbance
-    #
-
-    # steering angle limit
-    limited_steering = dy.saturate(u = results['delta'], lower_limit=-math.pi/2.0, upper_limit=math.pi/2.0)
-
-    # # the model of the vehicle
-    x_, y_, psi_, x_dot, y_dot, psi_dot_ = discrete_time_bicycle_model(limited_steering, velocity, Ts, wheelbase)
-
-    # driven distance
-    d = dy.euler_integrator(velocity, Ts)
-
-
-    # close the feedback loops
-    x       << x_
-    y       << y_
-    psi     << psi_
-    psi_dot << psi_dot_
-
-  #  x,y = sample_path_xy(input_path, dy.counter())
-
-
-   # print( 'x', x )
-
-    #
-    output_path = {
-        'd'   : d.set_name('d_distance'),
-        'x'   : x, # dy.float64(1).set_name('x'),
-        'y'   : y, # dy.float64(2).set_name('y'),
-
-        # 'psi' : dy.float64(3).set_name('psi'),
-        'K'   : dy.float64(4).set_name('K'),
-
-        'psi' : psi     + results['delta'],
-        # 'K'   : psi_dot + results['delta_dot'],
-
-        'd_star' : d * 1.1,
-        'tracked_index' : dy.counter()
-    }
-    
-    return output_path
 
 
 #
