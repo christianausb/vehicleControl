@@ -844,15 +844,13 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
     tracking_results.replace_signals( system.outputs )
 
 
-
-    position_on_path_found    = tracking_results['minimal_distance_reached']
+    output_valid              = tracking_results['minimal_distance_reached']
     need_more_path_input_data = tracking_results['reached_the_end_of_currently_available_path_data']
-    output_valid              = position_on_path_found
 
 
     # position_on_path_found = dy.boolean(True)
 
-    with dy.sub_if( position_on_path_found, prevent_output_computation=False, subsystem_name='controller') as system:
+    with dy.sub_if( output_valid, prevent_output_computation=False, subsystem_name='controller') as system:
 
         # ps - path sample
         ps = track_projection_on_path(path, x, y, tracking_results = tracking_results)
@@ -927,7 +925,6 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
     results['tracked_index'] = tracking_results['tracked_index']
     results['Delta_l_r']     = Delta_l_r      # the reference to the distance to the path
 
-    results['position_on_path_found']        = position_on_path_found
     results['need_more_path_input_data']     = need_more_path_input_data
     results['output_valid']                  = output_valid
 
@@ -950,9 +947,7 @@ def path_lateral_modification2(Ts, wheelbase, input_path, velocity, Delta_l_r, D
     psi     = dy.signal()
     psi_dot = dy.signal()
 
-
-
-
+    # controller
     results = path_following_controller_P(
         input_path,
         x, y, psi, 
@@ -986,14 +981,13 @@ def path_lateral_modification2(Ts, wheelbase, input_path, velocity, Delta_l_r, D
         # driven distance
         d = dy.euler_integrator(velocity, Ts)
 
-
-        # 
+        # outputs
         model_outputs = dy.structure(
             d       = d,
             x       = x_,
             y       = y_,
             psi     = psi_,
-            psi_dot = dy.delay(psi_dot_) # NOTE: delay introduced to avoid algebraic loops
+            psi_dot = dy.delay(psi_dot_) # NOTE: delay introduced to avoid algebraic loops, wait for improved ORTD
         )
         system.set_outputs(model_outputs.to_list())
     model_outputs.replace_signals( system.outputs )
@@ -1018,7 +1012,6 @@ def path_lateral_modification2(Ts, wheelbase, input_path, velocity, Delta_l_r, D
         'tracked_index' : results['tracked_index'],
 
         'output_valid'              : results['output_valid'],
-        'position_on_path_found'    : results['position_on_path_found'],
         'need_more_path_input_data' : results['need_more_path_input_data'],
 
         'read_position'             : results['read_position'],
