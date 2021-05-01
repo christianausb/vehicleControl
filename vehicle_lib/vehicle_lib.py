@@ -498,7 +498,8 @@ def track_projection_on_path(path, x, y, tracking_results=None, use_linear_inter
 
         d_star        - the optimal path parameter (distance along the path)
         x_r, y_r      - the coordinates of the path at d_star
-        psi_rr, K_r   - the path orientation and curvature of the path at d_star
+        psi_r         - the path orientation angle 
+        K_r           - the curvature of the path at d_star
         Delta_l       - the clostest distance to the path (signed) 
         tracked_index - the index in the path array for the closest distance to (x, y)
         Delta_index   - the change of the index to the previous lookup
@@ -537,16 +538,16 @@ def track_projection_on_path(path, x, y, tracking_results=None, use_linear_inter
 
     if use_linear_interpolation_in_sampling:
         # zero-order hold style sampling
-        d_star, x_r, y_r, psi_rr, K_r = sample_path_linear_interpolation(path, i_s, i_e, interpolation_factor)
+        d_star, x_r, y_r, psi_r, K_r = sample_path_linear_interpolation(path, i_s, i_e, interpolation_factor)
     else:
         # linear interpolation
-        d_star, x_r, y_r, psi_rr, K_r = sample_path(path, index=i_s )
+        d_star, x_r, y_r, psi_r, K_r = sample_path(path, index=i_s )
 
     #
     # compute the distance to closest sample
     #
 
-    Delta_l_closest_path_sample = _distance_to_Delta_l( tr['distance'], psi_rr, x_r, y_r, x, y )
+    Delta_l_closest_path_sample = _distance_to_Delta_l( tr['distance'], psi_r, x_r, y_r, x, y )
 
 
     # Finally assign the best estimate of the lateral distance to the path
@@ -585,7 +586,7 @@ def track_projection_on_path(path, x, y, tracking_results=None, use_linear_inter
     sample['d_star']  = d_star
     sample['x_r']     = x_r
     sample['y_r']     = y_r
-    sample['psi_rr']  = psi_rr
+    sample['psi_r']   = psi_r
     sample['K_r']     = K_r
     sample['Delta_l'] = Delta_l
 
@@ -593,8 +594,6 @@ def track_projection_on_path(path, x, y, tracking_results=None, use_linear_inter
     sample['Delta_index']   = tr['Delta_index']
 
     sample['internals']   = internals
-
-    #return d_star, x_r, y_r, psi_rr, K_r, Delta_l, tr['tracked_index'], tr['Delta_index'], internals
 
     return sample
 
@@ -872,10 +871,10 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
 
         #
         # compute an enhanced (less noise) signal for the path orientation psi_r by integrating the 
-        # curvature profile and fusing the result with psi_rr to mitigate the integration drift.
+        # curvature profile and fusing the result with ps['psi_r'] to mitigate the integration drift.
         #
 
-        psi_r, psi_r_dot = compute_path_orientation_from_curvature( Ts, v_star, ps['psi_rr'], ps['K_r'], L=1.0 )
+        psi_r, psi_r_dot = compute_path_orientation_from_curvature( Ts, v_star, ps['psi_r'], ps['K_r'], L=1.0 )
         
         # feedback control
         u_fb = k_p * (Delta_l_r - ps['Delta_l'])
