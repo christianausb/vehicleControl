@@ -198,25 +198,29 @@ def sample_path_linear_interpolation(path, i_s, i_e, interpolation_factor):
 
 
 
-def plot_path(path):
+def plot_path(path, show_xy = True, show_curvature = True, show_steering = True):
    # time = make_time(Ts, path_x)
 
-    plt.figure(figsize=(12,8), dpi=70)
-    plt.plot( path['X'], path['Y'] )
-    plt.show()
-
-    plt.figure(figsize=(12,8), dpi=70)
-    plt.plot(path['D'], np.rad2deg( path['PSI'] ))
-    plt.plot(path['D'], np.rad2deg( path['K'] ))
-    plt.legend(['angle (delta)', 'rate (delta_dot)'])
-    plt.show()
-
-    if 'DELTA' in path and 'DELTA_DOT' in path:
+    if show_xy:
         plt.figure(figsize=(12,8), dpi=70)
-        plt.plot(path['D'], np.rad2deg( path['DELTA'] ))
-        plt.plot(path['D'], np.rad2deg( path['DELTA_DOT'] ))
-        plt.legend(['steering angle (delta)', 'steering rate (delta_dot)'])
+        plt.plot( path['X'], path['Y'] )
         plt.show()
+
+    if show_curvature:
+        plt.figure(figsize=(12,8), dpi=70)
+        plt.plot(path['D'], np.rad2deg( path['PSI'] ))
+        plt.plot(path['D'], np.rad2deg( path['K'] ))
+        plt.legend(['angle (delta)', 'rate (delta_dot)'])
+        plt.show()
+
+    if show_steering:
+
+        if 'DELTA' in path and 'DELTA_DOT' in path:
+            plt.figure(figsize=(12,8), dpi=70)
+            plt.plot(path['D'], np.rad2deg( path['DELTA'] ))
+            plt.plot(path['D'], np.rad2deg( path['DELTA_DOT'] ))
+            plt.legend(['steering angle (delta)', 'steering rate (delta_dot)'])
+            plt.show()
 
 
     
