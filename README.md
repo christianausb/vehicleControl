@@ -14,9 +14,9 @@ Topics might be (to be further defined)
 
 - Lateral/Longitudinal acceleration
 
-- Path following (basic)  ✅ [path-following control](https://christianausb.github.io/vehicleControl/path_following_control.html) 
+- Path following / steering control (basic)  ✅ [path-following control](https://christianausb.github.io/vehicleControl/path_following_control.html) 
 
-- Path following (improved with curvature profile) ✅ [path-following control (curvature-based)](https://christianausb.github.io/vehicleControl/path_curvature_following_control.html) 
+- Path following / steering control based on path curvature ✅ [path-following control (curvature-based)](https://christianausb.github.io/vehicleControl/path_curvature_following_control.html) 
 
 - Lateral dynamics ✅ [lateral dynamics](https://christianausb.github.io/vehicleControl/path_following_lateral_dynamics.html) 
 
@@ -24,7 +24,7 @@ Topics might be (to be further defined)
 
 - Trajectory tracking control
 - Frenet transformation of the KBM
-- Motion planning
+- Motion planning [basic lateral planning](https://github.com/christianausb/vehicleControl/blob/main/lateral_path_transformation.ipynb) 
 - Safety Functions
 - Trailers
 

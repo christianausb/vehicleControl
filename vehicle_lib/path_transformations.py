@@ -234,6 +234,8 @@ def run_lateral_path_transformer(input_data, output_data, raw_cpp_instance, inpu
     path['V_PSI_DOT']     = math.nan * np.zeros(n)
     path['V_PSI']         = math.nan * np.zeros(n)
 
+    path['V_VELOCITY']    = math.nan * np.zeros(n)
+
 
     distance_at_the_end_of_horizon  = []
     distance_ahead  = []
@@ -318,7 +320,7 @@ def run_lateral_path_transformer(input_data, output_data, raw_cpp_instance, inpu
         path['V_PSI_DOT'][i]     = output_data.vehicle_psi
         path['V_PSI'][i]         = output_data.vehicle_psi_dot
 
-
+        path['V_VELOCITY'][i]    = output_data.velocity
 
     return path
 
