@@ -6,7 +6,7 @@
 
 Tutorial on: Vehicle path following and control
 
-This project considers example implementations and demonstrations for several aspects of car-like vehicle control, e.g., for autonomous driving purposes. The examples are implmented using model-based programming in python. 
+This project considers example implementations and demonstrations for several aspects of car-like vehicle control, e.g., for autonomous driving purposes. The examples are implemented using model-based programming in python. 
 
 Topics might be (to be further defined)
 
