@@ -70,8 +70,6 @@ def append_to_path_horizon(path, path_sample):
         Append one sample to the path horizon
     """
 
-#    d, x, y, psi, K = path_sample
-
     cb.append_to_buffer( path['D'],   path_sample['d']   )
     cb.append_to_buffer( path['X'],   path_sample['x']   )
     cb.append_to_buffer( path['Y'],   path_sample['y']   )
@@ -157,13 +155,6 @@ def sample_path_finite_difference(path, index):
         Compute path orientation angle form x/y data only using finite differences
     """
 
-    # y1 = dy.memory_read( memory=path['Y'], index=index ) 
-    # y2 = dy.memory_read( memory=path['Y'], index=index + dy.int32(1) )
-
-    # x1 = dy.memory_read( memory=path['X'], index=index ) 
-    # x2 = dy.memory_read( memory=path['X'], index=index + dy.int32(1) )
-
-
     x1, y1 = sample_path_xy(path, index)
     x2, y2 = sample_path_xy(path, index + 1)
 
@@ -202,26 +193,37 @@ def plot_path(path, show_xy = True, show_curvature = True, show_steering = True)
    # time = make_time(Ts, path_x)
 
     if show_xy:
-        plt.figure(figsize=(12,8), dpi=70)
+        plt.figure(figsize=(6,6), dpi=100)
         plt.plot( path['X'], path['Y'] )
         plt.show()
 
-    if show_curvature:
-        plt.figure(figsize=(12,8), dpi=70)
-        plt.plot(path['D'], np.rad2deg( path['PSI'] ))
-        plt.plot(path['D'], np.rad2deg( path['K'] ))
-        plt.legend(['angle (delta)', 'rate (delta_dot)'])
-        plt.show()
 
     if show_steering:
 
-        if 'DELTA' in path and 'DELTA_DOT' in path:
-            plt.figure(figsize=(12,8), dpi=70)
-            plt.plot(path['D'], np.rad2deg( path['DELTA'] ))
-            plt.plot(path['D'], np.rad2deg( path['DELTA_DOT'] ))
-            plt.legend(['steering angle (delta)', 'steering rate (delta_dot)'])
+        if 'V_DELTA' in path and 'V_DELTA_DOT' in path:
+            plt.figure(figsize=(12,3), dpi=100)
+            plt.plot(path['D'], np.rad2deg( path['V_DELTA']),     'r' )
+            plt.plot(path['D'], np.rad2deg( path['V_DELTA_DOT']), 'k' )
+            plt.plot(path['D'], np.rad2deg( path['K']),           'g' )
+
+            plt.legend(['steering angle ($\delta$) [${}^\circ$]', 'steering rate ($\dot\delta$) [${}^\circ / s$]', 'curvature ($\kappa$) [${}^\circ / m$]'])
+            plt.xlabel('distance along output path ($d$) [m]')
+            plt.ylabel('steering angle  / steering rate ')
+            plt.grid()
+
             plt.show()
 
+    if show_curvature:
+        plt.figure(figsize=(12,3), dpi=100)
+        plt.plot(path['D'], np.rad2deg( path['PSI']), 'r' )
+        plt.plot(path['D'], np.rad2deg( path['K']),   'g' )
+
+        plt.legend(['path orientation angle ($\psi_r$)', 'curvature ($\kappa = {\partial}/{\partial d} \, \Psi_r$)'])
+        plt.xlabel('distance along output path ($d$) [m]')
+        plt.ylabel('angle [${}^\circ$] / curvature [${}^\circ / m$]')
+        plt.grid()
+
+        plt.show()
 
     
 
@@ -1005,13 +1007,19 @@ def path_lateral_modification2(Ts, wheelbase, input_path, velocity, Delta_l_r, D
 
     #
     output_path = dy.structure({
-        'd'   : model_outputs['d'],
-        'x'   : model_outputs['x'],
-        'y'   : model_outputs['y'],
+        'd'       : model_outputs['d'],
+        'x'       : model_outputs['x'],
+        'y'       : model_outputs['y'],
+        'psi'     : psi,
+        'psi_dot' : psi_dot,
 
-        'psi' : psi     + results['delta'],
-        'K'   : psi_dot + results['delta_dot'],
-        'd_star' : results['d_star'],
+        'psi_r' : psi       + results['delta'],
+        'K'     : ( psi_dot + results['delta_dot'] ) / velocity ,
+
+        'delta'         : results['delta'],
+        'delta_dot'     : results['delta_dot'],
+
+        'd_star'        : results['d_star'],
         'tracked_index' : results['tracked_index'],
 
         'output_valid'              : results['output_valid'],
@@ -1153,7 +1161,7 @@ def global_lookup_distance_index( path_distance_storage, path_x_storage, path_y_
 
 
 #
-# helper functions functions for numpy calculations 
+# helper functions functions for Numpy calculations 
 #
 
 def co(time, val, Ts=1.0):

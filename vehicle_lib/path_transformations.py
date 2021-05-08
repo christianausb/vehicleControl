@@ -130,13 +130,19 @@ def compile_lateral_path_transformer(wheelbase = 3.0, Ts = 0.01):
     dy.append_output(output_signals['tracked_index'],                  'tracked_index')
     dy.append_output(output_signals['d_star'],                         'path_d_star')
 
-    dy.append_output(output_signals['d'], 'path_d')
-    dy.append_output(output_signals['x'], 'path_x')
-    dy.append_output(output_signals['y'], 'path_y')
-    dy.append_output(output_signals['psi'], 'path_psi')
-    dy.append_output(output_signals['K'], 'path_K')
+    dy.append_output(output_signals['d'],     'path_d')
+    dy.append_output(output_signals['x'],     'path_x')
+    dy.append_output(output_signals['y'],     'path_y')
+    dy.append_output(output_signals['psi_r'], 'path_psi')
+    dy.append_output(output_signals['K'],     'path_K')
 
-    dy.append_output(velocity*dy.float64(1.0), 'velocity')
+    dy.append_output(output_signals['delta'],         'vehicle_delta')
+    dy.append_output(output_signals['delta_dot'],     'vehicle_delta_dot')
+
+    dy.append_output(output_signals['psi'],           'vehicle_psi')
+    dy.append_output(output_signals['psi_dot'],       'vehicle_psi_dot')
+
+    dy.append_output(velocity*dy.float64(1.0),        'velocity')
 
 
     # generate code for Web Assembly (wasm), requires emcc (emscripten) to build
@@ -223,6 +229,12 @@ def run_lateral_path_transformer(input_data, output_data, raw_cpp_instance, inpu
     path['D_STAR']   = math.nan * np.zeros(n)
 
 
+    path['V_DELTA_DOT']   = math.nan * np.zeros(n)
+    path['V_DELTA']       = math.nan * np.zeros(n)
+    path['V_PSI_DOT']     = math.nan * np.zeros(n)
+    path['V_PSI']         = math.nan * np.zeros(n)
+
+
     distance_at_the_end_of_horizon  = []
     distance_ahead  = []
     head_index  = []
@@ -301,6 +313,12 @@ def run_lateral_path_transformer(input_data, output_data, raw_cpp_instance, inpu
         
         path['D_STAR'][i] = output_data.path_d_star
         
+        path['V_DELTA_DOT'][i]   = output_data.vehicle_delta_dot
+        path['V_DELTA'][i]       = output_data.vehicle_delta
+        path['V_PSI_DOT'][i]     = output_data.vehicle_psi
+        path['V_PSI'][i]         = output_data.vehicle_psi_dot
+
+
 
     return path
 
