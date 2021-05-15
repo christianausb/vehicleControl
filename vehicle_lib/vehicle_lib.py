@@ -348,7 +348,7 @@ def lateral_vehicle_model(u_delta, v, v_dot, Ts, wheelbase, x0=0.0, y0=0.0, psi0
 #
 
 
-def tracker(path, x, y):
+def tracker_old(path, x, y):
     """
         Continuously project the point (x, y) onto the given path (closest distance)
 
@@ -377,8 +377,13 @@ def tracker(path, x, y):
 
         # the index at which to compute the distance to and see if it is the minimum 
         index_to_investigate  = index_track + Delta_index
+
+        # cost function J: index_to_investigate -> distance
         x_test, y_test        = sample_path_xy(path, index_to_investigate)
         distance              = distance_between( x_test, y_test, x, y )
+
+
+
 
         distance_previous_step = dy.delay(distance, initial_state=100000)
         minimal_distance_reached = distance_previous_step < distance
@@ -420,6 +425,303 @@ def tracker(path, x, y):
     # return index_track_next, Delta_index, distance, minimal_distance_reached, reached_the_end_of_currently_available_path_data
 
     return tracking_results
+
+
+
+def continuous_optimization_along_path(path, current_index, J, par):
+    """
+        Minimize the given cost function by varying the index of the path array  
+
+
+                  <----- Delta_index_track ----->
+        array: X  X  X  X  X  X  X  X  X  X  X  X  X  X  X 
+                  ^               
+            current_index
+    """
+
+
+    if 'Delta_d' in path:
+        # constant sampling interval in distance
+        # computation can be simplified
+        pass
+
+
+    #
+    # 
+    #
+
+    Delta_index_track   = dy.signal()
+
+    # initialize J_star
+    J_star_0 = J(path, current_index + Delta_index_track, par)
+    J_star_0.set_name('J_star_0')
+
+    #
+    # compute the direction in which J has its decent
+    # if true: with increasing index J increases  --> decrease search index
+    # if false: with increasing index J decreases --> increase search index
+    #
+    J_next_index = J( path, current_index + Delta_index_track + dy.int32(1), par )
+    J_Delta_to_next_index = J_next_index - J_star_0
+
+    direction_flag = J_Delta_to_next_index > dy.float64(0)
+
+    search_index_increment = dy.int32(1) 
+    search_index_increment = dy.conditional_overwrite(search_index_increment, direction_flag, dy.int32(-1) )
+    search_index_increment.set_name('search_index_increment')
+
+    # loop to find the minimum of J
+    with dy.sub_loop( max_iterations=1000, subsystem_name='optim_loop' ) as system:
+
+        # get the highest available array index in the horizon
+        index_head, _ = path_horizon_head_index(path)
+        index_head.set_name('index_head')
+
+        # J_star(k) - the smallest J found so far
+        J_star = dy.signal()  #.set_datatype( dy.DataTypeFloat64(1) )
+        
+        # inc- / decrease the search index
+        #Delta_index = dy.sum(search_index_increment, initial_state=0, no_delay=True )
+
+        Delta_index_previous_step, Delta_index = dy.sum2(search_index_increment, initial_state=0 )
+        index_to_investigate = current_index + Delta_index_track + Delta_index
+
+        Delta_index.set_name('Delta_index')
+        index_to_investigate.set_name('index_to_investigate')
+
+        # sample the cost function and check if it got smaller in this step
+        J_to_verify = J( path, index_to_investigate, par )
+        step_caused_improvement = J_to_verify < J_star
+
+        J_to_verify.set_name('J_to_verify')
+        step_caused_improvement.set_name('step_caused_improvement')
+
+
+        # in case the step yielded a lower cost, replace the prev. minimal cost
+        J_star_next = dy.conditional_overwrite( J_star, step_caused_improvement, J_to_verify )
+
+        # state for J_star
+        J_star << dy.delay( J_star_next, initial_state=J_star_0 ).set_name('J_star')
+
+        #
+        # loop break conditions
+        #
+
+
+        # when reaching the end of the available data, stop the loop and indicate the need for extending the horizon
+        reached_the_end_of_currently_available_path_data = index_to_investigate >= index_head # reached the end of the input data?
+
+        # in case the iteration did not reduce the cost, assume that the minimum was reached in the prev. iteration
+        reached_minimum = dy.logic_not( step_caused_improvement ) 
+
+        system.loop_until( 
+            dy.logic_or( 
+                
+                reached_minimum, 
+                reached_the_end_of_currently_available_path_data 
+
+            ).set_name('loop_until')
+        )
+
+
+        #system.loop_until( dy.logic_not( step_caused_improvement ) )
+
+        # return the results computed in the loop        
+        # system.set_outputs([ Delta_index_previous_step, J_to_verify, J_star ])
+
+        # return  
+
+        #       
+        # system.set_outputs([ 
+        #     Delta_index_previous_step.set_name('Delta_index_previous_step'),
+        #     J_star_next.set_name('J_star_next'),
+        #     reached_minimum.set_name('reached_minimum'), 
+        #     reached_the_end_of_currently_available_path_data, #.set_name('reached_the_end_of_currently_available_path_data'),
+        #     (index_head*1).set_name('index_head'),
+        #     index_to_investigate,
+        #     J_to_verify
+        # ])
+
+
+        outputs = dy.structure()
+        outputs['Delta_index']                                       = Delta_index_previous_step
+        outputs['J_star']                                            = J_star_next
+        outputs['reached_minimum']                                   = reached_minimum
+        outputs['reached_the_end_of_currently_available_path_data']  = reached_the_end_of_currently_available_path_data
+        outputs['index_head']                                        = index_head * 1
+        outputs['index_to_investigate']                              = index_to_investigate
+        outputs['J_to_verify']                                       = J_to_verify
+
+        system.set_outputs(outputs.to_list())
+    outputs.replace_signals( system.outputs )
+
+
+    # Delta_index                                      = system.outputs[0]
+    # J_star                                           = system.outputs[1]
+    # reached_minimum                                  = system.outputs[2]
+    # reached_the_end_of_currently_available_path_data = system.outputs[3]
+
+
+    Delta_index                                      = outputs['Delta_index'] 
+    J_star                                           = outputs['J_star'] 
+    reached_minimum                                  = outputs['reached_minimum'] 
+    reached_the_end_of_currently_available_path_data = outputs['reached_the_end_of_currently_available_path_data'] 
+
+    # Introduce dy.sink(signal) in ORTD to ensure the given signals is not optimized out and becomes visible in the debugging traces
+    dummy = 0 * outputs['index_head'] + 0 * outputs['index_to_investigate'] + 0 * outputs['J_to_verify']
+
+
+    Delta_index_track_next = Delta_index_track + Delta_index
+    Delta_index_track << dy.delay(Delta_index_track_next, initial_state=0)
+    Delta_index_track.set_name('Delta_index_track')
+
+
+    # optimal index
+    optimal_index = current_index + Delta_index_track_next
+
+
+    results = dy.structure()
+    results['optimal_index']                                    = optimal_index
+    results['J_star']                                           = J_star           + 0 * dummy
+    results['Delta_index']                                      = Delta_index
+    results['Delta_index_track_next']                           = Delta_index_track_next
+    results['reached_minimum']                                  = reached_minimum
+    results['reached_the_end_of_currently_available_path_data'] = reached_the_end_of_currently_available_path_data
+
+    return results
+
+
+    # # problem specific
+    # # compute the residual distance
+    
+    # optimal_distance = sample_path_d(path, index=current_index + Delta_index_track_next)
+    # distance_residual = target_distance - optimal_distance
+
+    # return Delta_index_track_next, distance_residual, Delta_index 
+
+
+
+
+
+
+#
+# line closest point tracker
+#
+
+
+def tracker(path, x, y):
+    """
+        Continuously project the point (x, y) onto the given path (closest distance)
+
+        This is an internal function. C.f. track_projection_on_path for details and assumptions.
+
+        returns in structure tracking_results:
+            tracked_index    - the index in the path array for the closest distance to (x, y)
+            Delta_index      - the change of the index to the previous lookup
+            distance         - the absolute value of the closest distance of (x, y) to the path
+
+            reached_the_end_of_currently_available_path_data
+                             - reached the end of the path
+    """
+
+    #
+    # define the optimization problem
+    #
+
+    # pack parameters
+    par = ( x, y )
+
+    def J( path, index, par ):
+
+        # unpack parameters
+        x, y = par
+
+        # cost function J: index -> distance
+        x_test, y_test        = sample_path_xy( path, index )
+        distance              = distance_between( x_test, y_test, x, y )
+
+        # cost
+        return distance
+    
+
+
+    #
+    # continuous optimization
+    #
+
+    results = continuous_optimization_along_path(
+        path, 
+        dy.int32(0), 
+        J, 
+        par
+    )
+
+    #
+    distance = results['J_star']
+    minimal_distance_reached = results['reached_minimum']
+
+    #
+    tracking_results = dy.structure()
+    tracking_results['tracked_index']                                    = results['optimal_index']
+    tracking_results['Delta_index']                                      = results['Delta_index']
+    tracking_results['distance']                                         = distance
+    tracking_results['minimal_distance_reached']                         = minimal_distance_reached
+    tracking_results['reached_the_end_of_currently_available_path_data'] = results['reached_the_end_of_currently_available_path_data']
+
+    return tracking_results
+
+
+
+def tracker_distance_ahead(path, current_index, distance_ahead):
+    """
+        Track a point on the path that is ahead to the closest point by a given distance
+
+
+                  <----- Delta_index_track ----->
+        array: X  X  X  X  X  X  X  X  X  X  X  X  X  X  X 
+                  ^               
+            current_index
+    """
+
+    #
+    # define the optimization problem
+    #
+    target_distance = dy.float64(distance_ahead) + sample_path_d(path, current_index)
+
+    # pack parameters
+    par = ( target_distance, )
+
+    def J( path, index, par ):
+
+        # unpack parameters
+        target_distance = par[0]
+
+        # cost
+        d_test = sample_path_d(path, index)
+        cost = dy.abs( d_test - target_distance )
+
+        return cost
+    
+
+
+    #
+    # continuous optimization
+    #
+
+    results = continuous_optimization_along_path(
+        path, 
+        current_index, 
+        J, 
+        par
+    )
+
+    # compute the residual distance    
+    optimal_distance = sample_path_d(path, index=results['optimal_index'])
+    distance_residual = target_distance - optimal_distance
+
+    return results['Delta_index_track_next'], distance_residual, results['Delta_index'] 
+
+
 
 
 
@@ -602,102 +904,6 @@ def track_projection_on_path(path, x, y, tracking_results=None, use_linear_inter
 
 
 
-
-
-
-
-def tracker_distance_ahead(path, current_index, distance_ahead):
-    """
-        Track a point on the path that is ahead to the closest point by a given distance
-
-
-                  <----- Delta_index_track ----->
-        array: X  X  X  X  X  X  X  X  X  X  X  X  X  X  X 
-                  ^               
-            current_index
-    """
-
-    if 'Delta_d' in path:
-        # constant sampling interval in distance
-        # computation can be simplified
-        pass
-
-    # target_distance = dy.float64(distance_ahead) + dy.memory_read( memory=path['D'], index=current_index )
-    target_distance = dy.float64(distance_ahead) + sample_path_d(path, current_index)
-
-    def J( index ):
-
-        # d_test = dy.memory_read( memory=path['D'], index=index ) 
-        d_test = sample_path_d(path, index)
-        distance = dy.abs( d_test - target_distance )
-
-        return distance
-    
-
-    Delta_index_track   = dy.signal()
-
-    # initialize J_star
-    J_star_0 = J(current_index + Delta_index_track)
-    J_star_0.set_name('J_star_0')
-
-    #
-    # compute the direction in which J has its decent
-    # if true: with increasing index J increases  --> decrease search index
-    # if false: with increasing index J decreases --> increase search index
-    #
-    J_next_index = J(current_index + Delta_index_track + dy.int32(1))
-    J_Delta_to_next_index = J_next_index - J_star_0
-
-    direction_flag = J_Delta_to_next_index > dy.float64(0)
-
-    search_index_increment = dy.int32(1) 
-    search_index_increment = dy.conditional_overwrite(search_index_increment, direction_flag, dy.int32(-1) )
-    search_index_increment.set_name('search_index_increment')
-
-    # loop to find the minimum of J
-    with dy.sub_loop( max_iterations=1000 ) as system:
-
-
-        # J_star(k) - the smallest J found so far
-        J_star = dy.signal()  #.set_datatype( dy.DataTypeFloat64(1) )
-        
-        # inc- / decrease the search index
-        #Delta_index = dy.sum(search_index_increment, initial_state=0, no_delay=True )
-
-        Delta_index_prev_it, Delta_index = dy.sum2(search_index_increment, initial_state=0 )
-
-        Delta_index.set_name('Delta_index')
-
-        # sample the cost function and check if it got smaller in this step
-        J_to_verify = J( current_index + Delta_index_track + Delta_index )
-        J_to_verify.set_name('J_to_verify')
-
-        step_caused_improvement = J_to_verify < J_star
-
-        # replace the 
-        J_star_next = dy.conditional_overwrite( J_star, step_caused_improvement, J_to_verify )
-
-        # state for J_star
-        J_star << dy.delay( J_star_next, initial_state=J_star_0 ).set_name('J_star')
-
-        # loop break condition
-        system.loop_until( dy.logic_not( step_caused_improvement ) )
-        #system.loop_until( dy.int32(1) == dy.int32(0) )
-
-        # return the results computed in the loop        
-        system.set_outputs([ Delta_index_prev_it, J_to_verify, J_star ])
-
-    Delta_index = system.outputs[0]
-
-    Delta_index_track_next = Delta_index_track + Delta_index
-    Delta_index_track << dy.delay(Delta_index_track_next, initial_state=0)
-    Delta_index_track.set_name('Delta_index_track')
-
-    # compute the residual distance
-    optimal_distance = dy.memory_read( memory=path['D'], index=current_index + Delta_index_track_next )
-    distance_residual = target_distance - optimal_distance
-
-    return Delta_index_track_next, distance_residual, Delta_index 
 
 
 
@@ -1013,8 +1219,8 @@ def path_lateral_modification2(Ts, wheelbase, input_path, velocity, Delta_l_r, D
         'psi'     : psi,
         'psi_dot' : psi_dot,
 
-        'psi_r' : psi       + results['delta'],
-        'K'     : ( psi_dot + results['delta_dot'] ) / velocity ,
+        'psi_r' : psi       + results['delta'],                   # orientation angle of the path the vehicle is drawing
+        'K'     : ( psi_dot + results['delta_dot'] ) / velocity , # curvature of the path the vehicle is drawing
 
         'delta'         : results['delta'],
         'delta_dot'     : results['delta_dot'],

@@ -11,7 +11,7 @@ from .vehicle_lib import make_time
 
 
 @ORTDtoNumpy()
-def generate_one_dimensional_motion_trajectory(acceleration_input, Ts):
+def generate_one_dimensional_motion_ORTD(acceleration_input, Ts):
 
     # Delta_l_dotdot; the motion jerk is limited to +-1.0 m/s^3 
     acceleration     = dy.rate_limit(acceleration_input, Ts, lower_limit = -1.0, upper_limit = 1.0)
@@ -26,7 +26,7 @@ def generate_one_dimensional_motion_trajectory(acceleration_input, Ts):
 
 
 
-def generate_lateral_profile_1(Ts, T_phase1=1, T_phase2=3, T_phase3=1, T_phase4=3, T_phase5=1):
+def generate_one_dimensional_motion(Ts, T_phase1=1, T_phase2=3, T_phase3=1, T_phase4=3, T_phase5=1):
     """
         Generate a one-dimensional motion trajectory for a jerk-limited sidewards movement.
         
@@ -37,7 +37,7 @@ def generate_lateral_profile_1(Ts, T_phase1=1, T_phase2=3, T_phase3=1, T_phase4=
 
 
     
-    lateral_distance, velocity, acceleration = generate_one_dimensional_motion_trajectory(
+    lateral_distance, velocity, acceleration = generate_one_dimensional_motion_ORTD(
         np.concatenate((
             
             # phase 1: no movement 

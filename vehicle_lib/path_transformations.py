@@ -145,8 +145,12 @@ def compile_lateral_path_transformer(wheelbase = 3.0, Ts = 0.01):
     dy.append_output(velocity*dy.float64(1.0),        'velocity')
 
 
-    # generate code for Web Assembly (wasm), requires emcc (emscripten) to build
-    code_gen_results = dy.generate_code(template=dy.TargetWasm(enable_tracing=False), folder="generated/tmp1", build=False)
+    # generate code
+    code_gen_results = dy.generate_code(
+        template=dy.TargetWasm(enable_tracing=True), 
+        folder="generated/tmp1", 
+        build=False
+    )
 
     compiled_system = dyexe.CompiledCode(code_gen_results)
 
@@ -181,6 +185,9 @@ def put_input_path_sample(output_data, input_data, raw_cpp_instance, path, index
 
     # update (does not change output_data)
     raw_cpp_instance.step(output_data, input_data, False, True, False)
+
+    if output_data.elements_free_to_write < 1:
+        return True
     
     return False
 
@@ -251,6 +258,18 @@ def run_lateral_path_transformer(input_data, output_data, raw_cpp_instance, inpu
     # reset the states of the system
     raw_cpp_instance.step(output_data, input_data, False, False, True)
 
+    # pre-fill buffers
+#    for i in range(0,10):
+    while True:
+    
+        reached_end = put_input_path_sample( output_data, input_data, raw_cpp_instance, input_path, input_data_read_index )
+        if reached_end:
+            print('buffer filled')
+            break
+
+        input_data_read_index += 1
+
+    # run loop
     reached_end = False
 
     for i in range( 0, n ):
