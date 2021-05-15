@@ -445,16 +445,17 @@ def continuous_optimization_along_path(path, current_index, J, par):
         # computation can be simplified
         pass
 
+    # get the highest available array index in the horizon
+    index_head, _ = path_horizon_head_index(path)
 
     #
     # 
     #
 
-    Delta_index_track   = dy.signal()
+    Delta_index_track = dy.signal()
 
     # initialize J_star
     J_star_0 = J(path, current_index + Delta_index_track, par)
-    J_star_0.set_name('J_star_0')
 
     #
     # compute the direction in which J has its decent
@@ -466,47 +467,31 @@ def continuous_optimization_along_path(path, current_index, J, par):
 
     direction_flag = J_Delta_to_next_index > dy.float64(0)
 
-    search_index_increment = dy.int32(1) 
-    search_index_increment = dy.conditional_overwrite(search_index_increment, direction_flag, dy.int32(-1) )
-    search_index_increment.set_name('search_index_increment')
+    search_index_increment = dy.conditional_overwrite(dy.int32(1), direction_flag, dy.int32(-1) )
 
     # loop to find the minimum of J
     with dy.sub_loop( max_iterations=1000, subsystem_name='optim_loop' ) as system:
 
-        # get the highest available array index in the horizon
-        index_head, _ = path_horizon_head_index(path)
-        index_head.set_name('index_head')
-
         # J_star(k) - the smallest J found so far
-        J_star = dy.signal()  #.set_datatype( dy.DataTypeFloat64(1) )
+        J_star = dy.signal()
         
         # inc- / decrease the search index
-        #Delta_index = dy.sum(search_index_increment, initial_state=0, no_delay=True )
-
         Delta_index_previous_step, Delta_index = dy.sum2(search_index_increment, initial_state=0 )
         index_to_investigate = current_index + Delta_index_track + Delta_index
-
-        Delta_index.set_name('Delta_index')
-        index_to_investigate.set_name('index_to_investigate')
 
         # sample the cost function and check if it got smaller in this step
         J_to_verify = J( path, index_to_investigate, par )
         step_caused_improvement = J_to_verify < J_star
 
-        J_to_verify.set_name('J_to_verify')
-        step_caused_improvement.set_name('step_caused_improvement')
-
-
         # in case the step yielded a lower cost, replace the prev. minimal cost
         J_star_next = dy.conditional_overwrite( J_star, step_caused_improvement, J_to_verify )
 
         # state for J_star
-        J_star << dy.delay( J_star_next, initial_state=J_star_0 ).set_name('J_star')
+        J_star << dy.delay( J_star_next, initial_state=J_star_0 )
 
         #
         # loop break conditions
         #
-
 
         # when reaching the end of the available data, stop the loop and indicate the need for extending the horizon
         reached_the_end_of_currently_available_path_data = index_to_investigate >= index_head # reached the end of the input data?
@@ -523,26 +508,17 @@ def continuous_optimization_along_path(path, current_index, J, par):
             ).set_name('loop_until')
         )
 
-
-        #system.loop_until( dy.logic_not( step_caused_improvement ) )
-
-        # return the results computed in the loop        
-        # system.set_outputs([ Delta_index_previous_step, J_to_verify, J_star ])
+        # assign signals names to appear in the generated source code
+        J_star_0.set_name('J_star_0')
+        search_index_increment.set_name('search_index_increment')
+        J_star.set_name('J_star')
+        Delta_index.set_name('Delta_index')
+        index_head.set_name('index_head')
+        index_to_investigate.set_name('index_to_investigate')
+        J_to_verify.set_name('J_to_verify')
+        step_caused_improvement.set_name('step_caused_improvement')
 
         # return  
-
-        #       
-        # system.set_outputs([ 
-        #     Delta_index_previous_step.set_name('Delta_index_previous_step'),
-        #     J_star_next.set_name('J_star_next'),
-        #     reached_minimum.set_name('reached_minimum'), 
-        #     reached_the_end_of_currently_available_path_data, #.set_name('reached_the_end_of_currently_available_path_data'),
-        #     (index_head*1).set_name('index_head'),
-        #     index_to_investigate,
-        #     J_to_verify
-        # ])
-
-
         outputs = dy.structure()
         outputs['Delta_index']                                       = Delta_index_previous_step
         outputs['J_star']                                            = J_star_next
@@ -554,12 +530,6 @@ def continuous_optimization_along_path(path, current_index, J, par):
 
         system.set_outputs(outputs.to_list())
     outputs.replace_signals( system.outputs )
-
-
-    # Delta_index                                      = system.outputs[0]
-    # J_star                                           = system.outputs[1]
-    # reached_minimum                                  = system.outputs[2]
-    # reached_the_end_of_currently_available_path_data = system.outputs[3]
 
 
     Delta_index                                      = outputs['Delta_index'] 
@@ -589,16 +559,6 @@ def continuous_optimization_along_path(path, current_index, J, par):
     results['reached_the_end_of_currently_available_path_data'] = reached_the_end_of_currently_available_path_data
 
     return results
-
-
-    # # problem specific
-    # # compute the residual distance
-    
-    # optimal_distance = sample_path_d(path, index=current_index + Delta_index_track_next)
-    # distance_residual = target_distance - optimal_distance
-
-    # return Delta_index_track_next, distance_residual, Delta_index 
-
 
 
 
