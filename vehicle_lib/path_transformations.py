@@ -147,7 +147,7 @@ def compile_lateral_path_transformer(wheelbase = 3.0, Ts = 0.01):
 
     # generate code
     code_gen_results = dy.generate_code(
-        template=dy.TargetWasm(enable_tracing=True), 
+        template=dy.TargetWasm(enable_tracing=False), 
         folder="generated/tmp1", 
         build=False
     )
