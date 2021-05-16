@@ -92,6 +92,25 @@ def path_horizon_head_index(path):
     return head_index, distance_at_the_end_of_horizon
 
 
+def path_horizon_tail_index(path):
+    """
+        Get the current tail-index position in the horizon and the distance at the tail
+    """
+
+    if path['buffer_type']  == 'dy.memory':
+        tail_index                       = dy.int32( 0 )
+        distance_at_the_begin_of_horizon = dy.memory_read( memory=path['D'],   index=tail_index ) 
+
+    elif path['buffer_type']  == 'circular_buffer':
+        tail_index                     = cb.get_absolute_minimal_index(path['D'])
+        distance_at_the_begin_of_horizon = cb.read_from_absolute_index(path['D'], tail_index)
+
+    return tail_index, distance_at_the_begin_of_horizon
+
+
+
+
+
 
 def sample_path(path, index):
     """
@@ -422,8 +441,6 @@ def tracker_old(path, x, y):
     tracking_results['minimal_distance_reached']                         = minimal_distance_reached
     tracking_results['reached_the_end_of_currently_available_path_data'] = reached_the_end_of_currently_available_path_data
 
-    # return index_track_next, Delta_index, distance, minimal_distance_reached, reached_the_end_of_currently_available_path_data
-
     return tracking_results
 
 
@@ -458,16 +475,14 @@ def continuous_optimization_along_path(path, current_index, J, par):
     J_star_0 = J(path, current_index + Delta_index_track, par)
 
     #
-    # compute the direction in which J has its decent
+    # compute the direction (gradient) in which J has its decent
     # if true: with increasing index J increases  --> decrease search index
     # if false: with increasing index J decreases --> increase search index
     #
-    J_next_index = J( path, current_index + Delta_index_track + dy.int32(1), par )
-    J_Delta_to_next_index = J_next_index - J_star_0
+    J_prev_index = J( path, current_index + Delta_index_track - 1, par )
+    J_Delta_to_next_index = J_star_0 - J_prev_index
 
-    direction_flag = J_Delta_to_next_index > dy.float64(0)
-
-    search_index_increment = dy.conditional_overwrite(dy.int32(1), direction_flag, dy.int32(-1) )
+    search_index_increment = dy.conditional_overwrite(dy.int32(1), J_Delta_to_next_index > 0, dy.int32(-1) )
 
     # loop to find the minimum of J
     with dy.sub_loop( max_iterations=1000, subsystem_name='optim_loop' ) as system:
@@ -496,14 +511,21 @@ def continuous_optimization_along_path(path, current_index, J, par):
         # when reaching the end of the available data, stop the loop and indicate the need for extending the horizon
         reached_the_end_of_currently_available_path_data = index_to_investigate >= index_head # reached the end of the input data?
 
+        # similarly check for the begin ...
+        reached_the_begin_of_currently_available_path_data = index_to_investigate - 1 <= path_horizon_tail_index(path)[0]
+
         # in case the iteration did not reduce the cost, assume that the minimum was reached in the prev. iteration
         reached_minimum = dy.logic_not( step_caused_improvement ) 
 
         system.loop_until( 
-            dy.logic_or( 
-                
-                reached_minimum, 
-                reached_the_end_of_currently_available_path_data 
+            dy.logic_or(
+                dy.logic_or( 
+                    
+                    reached_minimum, 
+                    reached_the_end_of_currently_available_path_data 
+
+                ),
+                reached_the_begin_of_currently_available_path_data
 
             ).set_name('loop_until')
         )
@@ -542,7 +564,7 @@ def continuous_optimization_along_path(path, current_index, J, par):
 
 
     Delta_index_track_next = Delta_index_track + Delta_index
-    Delta_index_track << dy.delay(Delta_index_track_next, initial_state=0)
+    Delta_index_track << dy.delay(Delta_index_track_next, initial_state=1) # start at 1 so that the backwards gradient can be computed at index=1
     Delta_index_track.set_name('Delta_index_track')
 
 
@@ -657,8 +679,8 @@ def tracker_distance_ahead(path, current_index, distance_ahead):
         target_distance = par[0]
 
         # cost
-        d_test = sample_path_d(path, index)
-        cost = dy.abs( d_test - target_distance )
+        d = sample_path_d(path, index)
+        cost   = dy.abs( d - target_distance )
 
         return cost
     
@@ -1006,7 +1028,8 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
 
 
     # track the evolution of the closest point on the path to the vehicles position
-    with dy.sub_if( index_head > 10 ) as system:
+    minimal_number_of_path_samples_to_start = 5 # depends on tracker(); should be at least 2
+    with dy.sub_if( index_head > minimal_number_of_path_samples_to_start, subsystem_name='tracker' ) as system:
 
         tracking_results = tracker(path, x, y)
 

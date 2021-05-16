@@ -252,19 +252,18 @@ def run_lateral_path_transformer(input_data, output_data, raw_cpp_instance, inpu
     tracked_index = []
 
 
-    #real_world_sample_index = 0
     input_data_read_index = 0
 
     # reset the states of the system
     raw_cpp_instance.step(output_data, input_data, False, False, True)
 
-    # pre-fill buffers
-#    for i in range(0,10):
-    while True:
+    # pre-fill path horizon; could be omitted, however, then the controller will ask for more data by itself 
+    for i in range(0,10):
+#    while True:
     
         reached_end = put_input_path_sample( output_data, input_data, raw_cpp_instance, input_path, input_data_read_index )
         if reached_end:
-            print('buffer filled')
+            #print('buffer filled')
             break
 
         input_data_read_index += 1
@@ -287,7 +286,6 @@ def run_lateral_path_transformer(input_data, output_data, raw_cpp_instance, inpu
             
 
             if output_data.output_valid == False:
-                # print('d')
                 
                 # another path input sample is needed
                 reached_end = put_input_path_sample( output_data, input_data, raw_cpp_instance, input_path, input_data_read_index )
