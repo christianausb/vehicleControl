@@ -147,9 +147,7 @@ def compile_lateral_path_transformer(wheelbase = 3.0, Ts = 0.01):
 
     # generate code
     code_gen_results = dy.generate_code(
-        template=dy.TargetWasm(enable_tracing=False), 
-        folder="generated/tmp1", 
-        build=False
+        template=dy.TargetRawCpp(enable_tracing=False)
     )
 
     compiled_system = dyexe.CompiledCode(code_gen_results)

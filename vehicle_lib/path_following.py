@@ -49,8 +49,8 @@ def compute_path_orientation_from_curvature( Ts : float, velocity, psi_rr, K_r, 
 
         returns 
         
-        psi_r_reconst     - the noise-reduced path orientation
-        psi_r_reconst_dot - the time derivative
+        psi_r_reconst     - the noise-reduced path orientation (reconstructed)
+        psi_r_reconst_dot - the time derivative                (reconstructed)
     """
 
     eps = dy.signal()
@@ -86,20 +86,33 @@ def compute_nominal_steering_from_path_heading( Ts : float, l_r : float, v, psi_
 # Path following control
 #
 
-def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Delta_l_r_dot = None, k_p=2.0, Ts=0.01, psi_dot = None, velocity_dot = None, Delta_l_r_dotdot = None, Delta_l_dot = None  ):
+def path_following(
+        controller,
+        par, 
+        path, 
+        x, y, psi, velocity, 
+        Delta_l_r = 0.0, 
+        Delta_l_r_dot = None, 
+        psi_dot = None, 
+        velocity_dot = None, 
+        Delta_l_r_dotdot = None, 
+        Delta_l_dot = None, 
+        Ts=0.01
+    ):
     """
-        Basic steering control for path tracking using proportional lateral error compensation
+        Basic steering control for path tracking and user-defined lateral error compensation
         
-        Path following steering control for exact path following and P-control to control the lateral 
-        distance to the path are combined.
+        Implements steering control for exact path following.
     
-        Controlls a kinematic bicycle model (assumption) to follow the given path.
-        Herein, the steering angle delta is the control variable. The variables
+        Assumed is a kinematic bicycle model.
+        Herein, the steering angle (delta) is the control variable. The variables
         x, y, psi, and velocity are measurements taken from the controlled system.
-        The lateral offset Delta_l_r to the path is the reference. The optional
-        signal Delta_l_r_dot describes the time derivative of Delta_l_r.
+        The lateral offset Delta_l_r to the path is the reference for control.
+        The optional signal Delta_l_r_dot describes the time derivative of Delta_l_r.
         
-        Ts - the sampling time
+        controller - callback function that defines the error compensating controller
+        par        - parameters that are passed to the callback
+        Ts         - the sampling time
 
         Return values
         -------------
@@ -173,28 +186,41 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
         #
 
         psi_r, psi_r_dot = compute_path_orientation_from_curvature( Ts, v_star, ps['psi_r'], ps['K_r'], L=1.0 )
-        
-        # feedback control
-        u_fb = k_p * (Delta_l_r - ps['Delta_l'])
 
-        if Delta_l_r_dot is not None:
-            u = Delta_l_r_dot + u_fb
-        else:
-            u = u_fb
 
+        #
+        # controller callback
+        #
+
+        references = {
+            'Delta_l_r'     : Delta_l_r,
+            'Delta_l_r_dot' : Delta_l_r_dot,
+            'Delta_l_r_dotdot' : Delta_l_r_dotdot
+        }
+
+        measurements = {
+            'velocity'     : velocity,
+            'velocity_dot' : velocity_dot,
+            'psi'          : psi,
+            'psi_dot'      : psi_dot,
+            'Delta_l'      : ps['Delta_l'],
+            'Delta_l_dot'  : Delta_l_dot
+        }
+
+        u, u_dot = controller( references, measurements, par )
+
+
+        #
         # path tracking
+        #
         # resulting lateral model u --> Delta_l : 1/s
+        #
+
         Delta_u << dy.asin( dy.saturate(u / velocity, -0.99, 0.99) )
         delta = dy.unwrap_angle(angle=psi_r - psi + Delta_u, normalize_around_zero = True)
 
         # compute the derivatives of the steering angle (steering rate)
         if psi_dot is not None and Delta_l_r_dot is not None and velocity_dot is not None and Delta_l_r_dotdot is not None:
-            
-            if Delta_l_dot is None:
-                u_dot = Delta_l_r_dotdot # + 0 neglect numerical random walk error compensation 
-            else:
-                u_dot = Delta_l_r_dotdot + Delta_l_dot
-
 
             Delta_u_dot = dy.cos( u / velocity ) * ( velocity * u_dot - velocity_dot * u ) / ( velocity*velocity )
             delta_dot = psi_r_dot - psi_dot + Delta_u_dot
@@ -233,6 +259,113 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
     results['minimal_read_position'] = results['read_position'] - 100
 
     return results
+
+
+
+
+
+
+
+
+def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Delta_l_r_dot = None, k_p=2.0, Ts=0.01, psi_dot = None, velocity_dot = None, Delta_l_r_dotdot = None, Delta_l_dot = None  ):
+    """
+        Basic steering control for path tracking using proportional lateral error compensation
+            
+        Implements steering control for exact path following combined with a P-controller to 
+        control the lateral distance to the path.
+    
+        Assumed is a kinematic bicycle model.
+        Herein, the steering angle (delta) is the control variable. The variables
+        x, y, psi, and velocity are measurements taken from the controlled system.
+        The lateral offset Delta_l_r to the path is the reference for control.
+        The optional signal Delta_l_r_dot describes the time derivative of Delta_l_r.
+
+        Ts  - the sampling time
+        k_p - proportional controller gain
+
+        Return values - same as in path_following()
+        -------------------------------------------
+
+        results = {}
+        results['x_r']                      # the current x-position of the closest point on the reference path
+        results['y_r']                      # the current y-position of the closest point on the reference path
+        results['v_star']                   # the current velocity of the closest point on the reference path
+        results['d_star']                   # the current distance parameter of the closest point on the reference path
+        results['psi_r']                    # the current path-tangent orientation angle in the closest point on the reference path
+        results['psi_r_dot']                # the time derivative of psi_r
+        results['Delta_l_r']                # the reference to the distance to the path
+        results['Delta_l_r_dot']            # optional: the time derivative of Delta_l_r
+        results['Delta_l']                  # the distance to the closest point on the reference path
+        results['Delta_u']                  # small steering delta
+        results['delta']                    # the requested steering angle / the control variable
+
+        in case Delta_l_r_dot, psi_dot, velocity_dot, and Delta_l_r_dotdot are given
+        the steering derivatives can be computed.
+
+        results['Delta_u_dot']              # the derivative of Delta_u
+        results['delta_dot']                # the derivative of delta_dot
+
+        Optionally, Delta_l_dot might be further given which improves the accuracy of the derivatives
+        in case of strong feedback control activity.  
+
+    """
+
+    def controller( references, measurements, par ):
+        """
+            P-controller to compensate for the lateral error to the path
+        """
+
+        Delta_l_dot      = measurements['Delta_l_dot']
+        Delta_l_r_dot    = references['Delta_l_r_dot']
+        Delta_l_r_dotdot = references['Delta_l_r_dotdot']
+
+        if Delta_l_dot is None:
+            Delta_l_dot   = 0.0
+
+        if Delta_l_r_dot is None:
+            Delta_l_r_dot = 0.0
+
+        if Delta_l_r_dotdot is None:
+            Delta_l_r_dotdot = 0.0
+
+        #
+        # 2-DoF feedback control; herein, Delta_l_r_dot is the feed forward component
+        #
+        # The assumed model is G(s) = 1/s, which is the augmented system under active path following
+        # and linearising control.
+        #
+        u = Delta_l_r_dot        + par['k_p'] * (references['Delta_l_r'] - measurements['Delta_l'])
+
+        # derivative of u
+        u_dot = Delta_l_r_dotdot + par['k_p'] * ( Delta_l_r_dot - Delta_l_dot )
+
+        return u, u_dot
+
+
+
+    par = {
+        'k_p' : k_p
+    }
+
+    # path following and linearising control
+    results = path_following(
+        controller,            # callback to the implementation of P-control
+        par,                   # parameters to the callback
+        path, 
+        x, y, psi, velocity, 
+        Delta_l_r, 
+        Delta_l_r_dot, 
+        psi_dot, 
+        velocity_dot, 
+        Delta_l_r_dotdot, 
+        Delta_l_dot, 
+        Ts
+    )
+
+    return results
+
+
+
 
 
 
