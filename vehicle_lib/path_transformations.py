@@ -163,22 +163,31 @@ def compile_lateral_path_transformer(wheelbase = 3.0, Ts = 0.01):
 
 def put_input_path_sample(output_data, input_data, raw_cpp_instance, path, index):
 
+    if type(path) is dict:
 
-    if index >= len(path['D']):
-        # reached_end = False
+        if index >= len(path['D']):
+            # reached_end = False
+            return True
+            
+        input_data.d_sample    = path['D'][index]
+        input_data.x_sample    = path['X'][index]
+        input_data.y_sample    = path['Y'][index]
+        input_data.psi_sample  = path['PSI'][index]
+        input_data.K_sample    = path['K'][index]
 
-        return True
-        
+
+    elif callable(path):
+        # run callback that puts data into 'input_data'
+        reached_to_end = path(input_data, index)
+
+        if reached_to_end:
+            return True
+
+
+    # set flags indicating path input data only    
     input_data.input_sample_valid     = False # do not trigger the controller
     input_data.async_input_data_valid = True  # put new path data
 
-    input_data.d_sample    = path['D'][index]
-    input_data.x_sample    = path['X'][index]
-    input_data.y_sample    = path['Y'][index]
-    input_data.psi_sample  = path['PSI'][index]
-    input_data.K_sample    = path['K'][index]
-    
-    
     raw_cpp_instance.step(output_data, input_data, True, False, False)
 
     # update (does not change output_data)
