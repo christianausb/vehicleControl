@@ -189,6 +189,26 @@ def sample_path_linear_interpolation(path, i_s, i_e, interpolation_factor):
 
 
 
+def load_path_from_cvs_TUMFTM(filename : str, delimiter=';'):
+    """
+        read CVS data as produced by 
+        https://github.com/TUMFTM/global_racetrajectory_optimization
+    """
+    A = np.genfromtxt(filename, delimiter=delimiter)
+        
+    path = {
+        'D' :   A[:,0],
+        'X' :   A[:,1],
+        'Y' :   A[:,2],
+        'PSI' : A[:,3] + np.deg2rad(90), # TUMFTM uses a slightly different definition of the angle psi
+        'K' :   A[:,4]
+    }
+    
+    if np.size(A, 1) > 5:
+        path['V_R'] =  A[:,5]
+        path['A_R'] =  A[:,6]
+    
+    return path
 
 
 def plot_path(path, show_xy = True, show_curvature = True, show_steering = True):
@@ -197,7 +217,17 @@ def plot_path(path, show_xy = True, show_curvature = True, show_steering = True)
     if show_xy:
         plt.figure(figsize=(6,6), dpi=100)
         plt.plot( path['X'], path['Y'] )
+
+        plt.plot( path['X'][0], path['Y'][0], 'r+', label='begin' )
+        plt.plot( path['X'][-1], path['Y'][-1], 'k+', label='end' )
+        plt.plot( path['X'][10], path['Y'][10], 'g+', label='begin + 10 samples' )
+
+        plt.legend()
+        plt.grid()
+
         plt.show()
+
+
 
 
     if show_steering:
@@ -216,15 +246,24 @@ def plot_path(path, show_xy = True, show_curvature = True, show_steering = True)
             plt.show()
 
     if show_curvature:
-        plt.figure(figsize=(12,3), dpi=100)
+        plt.figure(figsize=(12,2), dpi=100)
         plt.plot(path['D'], np.rad2deg( path['PSI']), 'r' )
-        plt.plot(path['D'], np.rad2deg( path['K']),   'g' )
 
-        plt.legend(['path orientation angle ($\psi_r$)', 'curvature ($\kappa = {\partial}/{\partial d} \, \Psi_r$)'])
+        plt.legend(['path orientation angle ($\Psi_r$)'])
         plt.xlabel('distance along output path ($d$) [m]')
-        plt.ylabel('angle [${}^\circ$] / curvature [${}^\circ / m$]')
+        plt.ylabel('angle [${}^\circ$]')
         plt.grid()
 
         plt.show()
 
+
+        plt.figure(figsize=(12,2), dpi=100)
+        plt.plot(path['D'], np.rad2deg( path['K']),   'g' )
+
+        plt.legend(['curvature ($\kappa = {\partial}/{\partial d} \, \Psi_r$)'])
+        plt.xlabel('distance along output path ($d$) [m]')
+        plt.ylabel('curvature [${}^\circ / m$]')
+        plt.grid()
+
+        plt.show()
     

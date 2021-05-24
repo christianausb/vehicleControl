@@ -13,6 +13,7 @@ def async_path_data_handler(
         async_input_data_valid, 
         path_sample, 
         input_signals,
+        d0, x0, y0, psi0, delta0, delta_dot0,
         par = {},
         samples_in_buffer = 10000
     ):
@@ -42,6 +43,7 @@ def async_path_data_handler(
             Delta_l_r,
             Delta_l_r_dot,
             Delta_l_r_dotdot,
+            d0, x0, y0, psi0, delta0, delta_dot0,
             par
         )
         
@@ -96,15 +98,25 @@ def compile_lateral_path_transformer(
     dy.clear()
     system = dy.enter_system()
 
+    # time-series for velocity, lateral distance, ...
     velocity               = dy.system_input( dy.DataTypeFloat64(1), name='velocity_',         default_value=1,      value_range=[0, 25],   title="vehicle velocity")
     Delta_l_r              = dy.system_input( dy.DataTypeFloat64(1), name='Delta_l_r',         default_value=0.0,    value_range=[-10, 10], title="lateral deviation to the path")
     Delta_l_r_dot          = dy.system_input( dy.DataTypeFloat64(1), name='Delta_l_r_dot',     default_value=0.0,    value_range=[-10, 10], title="1st-order time derivative of lateral deviation to the path")
     Delta_l_r_dotdot       = dy.system_input( dy.DataTypeFloat64(1), name='Delta_l_r_dotdot',  default_value=0.0,    value_range=[-10, 10], title="2nd-order time derivative of lateral deviation to the path")
 
+    # initial states of the vehicle
+    d0         = dy.system_input( dy.DataTypeFloat64(1), name='d0',         default_value=0, title="initial state d0")
+    x0         = dy.system_input( dy.DataTypeFloat64(1), name='x0',         default_value=0, title="initial state x0")
+    y0         = dy.system_input( dy.DataTypeFloat64(1), name='y0',         default_value=0, title="initial state y0")
+    psi0       = dy.system_input( dy.DataTypeFloat64(1), name='psi0',       default_value=0, title="initial state psi0")
+    delta0     = dy.system_input( dy.DataTypeFloat64(1), name='delta0',     default_value=0, title="initial state delta0")
+    delta_dot0 = dy.system_input( dy.DataTypeFloat64(1), name='delta_dot0', default_value=0, title="initial state delta_dot0")
 
+    # control inputs
     async_input_data_valid = dy.system_input( dy.DataTypeBoolean(1), name='async_input_data_valid')
     input_sample_valid     = dy.system_input( dy.DataTypeBoolean(1), name='input_sample_valid')
 
+    # async path samples
     path_sample = {}
     path_sample['d']   = dy.system_input( dy.DataTypeFloat64(1), name='d_sample')
     path_sample['x']   = dy.system_input( dy.DataTypeFloat64(1), name='x_sample')
@@ -122,6 +134,7 @@ def compile_lateral_path_transformer(
         async_input_data_valid, 
         path_sample, 
         input_signals,
+        d0, x0, y0, psi0, delta0, delta_dot0,
         par,
     )
 
@@ -229,15 +242,33 @@ def execute_control_step(output_data, input_data, raw_cpp_instance, input_signal
     raw_cpp_instance.step(output_data, input_data, False, True, False)
 
         
-        
+def set_initial_states( input_data, initial_states={} ):
+
+    # default values
+    input_data.d0         = 0.0
+    input_data.x0         = 0.0
+    input_data.y0         = 0.0
+    input_data.psi0       = 0.0
+    input_data.delta0     = 0.0
+    input_data.delta_dot0 = 0.0
+
+    # overwrites
+    for key, value in initial_states.items():
+        setattr(input_data, key, value)
 
 
 
 
 
 
-
-def run_lateral_path_transformer(input_data, output_data, raw_cpp_instance, input_path, input_sequence):
+def run_lateral_path_transformer(
+        input_data, 
+        output_data, 
+        raw_cpp_instance, 
+        input_path, 
+        input_sequence,
+        initial_states={}
+    ):
 
 
     # simulate n steps
@@ -273,6 +304,9 @@ def run_lateral_path_transformer(input_data, output_data, raw_cpp_instance, inpu
 
 
     input_data_read_index = 0
+
+    # set initial states via the input signals
+    set_initial_states( input_data, initial_states ) 
 
     # reset the states of the system
     raw_cpp_instance.step(output_data, input_data, False, False, True)
@@ -382,12 +416,13 @@ class LateralPathTransformer():
         self._input_data  = self.compiled_system.system_class.Inputs()
         self._output_data = self.compiled_system.system_class.Outputs()
 
-    def run_lateral_path_transformer( self, input_path, lateral_profile):
+    def run_lateral_path_transformer( self, input_path, lateral_profile, initial_states={} ):
 
         return run_lateral_path_transformer(
             input_data        = self._input_data, 
             output_data       = self._output_data,
             raw_cpp_instance  = self._raw_cpp_instance,
             input_path        = input_path,
-            input_sequence    = lateral_profile
+            input_sequence    = lateral_profile,
+            initial_states    = initial_states
         )

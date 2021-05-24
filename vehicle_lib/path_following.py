@@ -385,6 +385,7 @@ def path_lateral_modification2(
         Delta_l_r, 
         Delta_l_r_dot, 
         Delta_l_r_dotdot, 
+        d0, x0, y0, psi0, delta0, delta_dot0,
         par={}
     ):
 
@@ -456,10 +457,15 @@ def path_lateral_modification2(
         limited_steering = dy.saturate(u=results['delta'], lower_limit=-math.pi/2.0, upper_limit=math.pi/2.0)
 
         # the model of the vehicle
-        x_, y_, psi_, x_dot, y_dot, psi_dot_ = discrete_time_bicycle_model(limited_steering, velocity, Ts, wheelbase)
+        x_, y_, psi_, x_dot, y_dot, psi_dot_ = discrete_time_bicycle_model(
+            limited_steering, 
+            velocity, 
+            Ts, wheelbase,
+            x0, y0, psi0
+            )
 
         # driven distance
-        d = dy.euler_integrator(velocity, Ts)
+        d = dy.euler_integrator(velocity, Ts, initial_state=d0)
 
         # outputs
         model_outputs = dy.structure(
