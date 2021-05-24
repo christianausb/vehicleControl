@@ -96,7 +96,6 @@ def path_following(
         psi_dot = None, 
         velocity_dot = None, 
         Delta_l_r_dotdot = None, 
-        Delta_l_dot = None, 
         Ts=0.01
     ):
     """
@@ -136,8 +135,6 @@ def path_following(
         results['Delta_u_dot']              # the derivative of Delta_u
         results['delta_dot']                # the derivative of delta_dot
 
-        Optionally, Delta_l_dot might be further given which improves the accuracy of the derivatives
-        in case of strong feedback control activity.  
 
     """
     index_head, _ = path_horizon_head_index(path)
@@ -197,6 +194,10 @@ def path_following(
             'Delta_l_r_dot' : Delta_l_r_dot,
             'Delta_l_r_dotdot' : Delta_l_r_dotdot
         }
+
+        # Delta_l_dot might be further computed which improves the accuracy of the derivatives
+        # in case of strong feedback control activity.  
+        Delta_l_dot = None  # TODO: implement
 
         measurements = {
             'velocity'     : velocity,
@@ -267,7 +268,16 @@ def path_following(
 
 
 
-def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Delta_l_r_dot = None, k_p=2.0, Ts=0.01, psi_dot = None, velocity_dot = None, Delta_l_r_dotdot = None, Delta_l_dot = None  ):
+def path_following_controller_P( 
+        path, 
+        x, y, psi, velocity, 
+        Delta_l_r = 0.0, 
+        Delta_l_r_dot = None, 
+        k_p=2.0, Ts=0.01, 
+        psi_dot = None, 
+        velocity_dot = None, 
+        Delta_l_r_dotdot = None, 
+    ):
     """
         Basic steering control for path tracking using proportional lateral error compensation
             
@@ -280,8 +290,9 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
         The lateral offset Delta_l_r to the path is the reference for control.
         The optional signal Delta_l_r_dot describes the time derivative of Delta_l_r.
 
-        Ts  - the sampling time
-        k_p - proportional controller gain
+        path  - the path/horizon to follow
+        Ts    - the sampling time
+        k_p   - proportional controller gain
 
         Return values - same as in path_following()
         -------------------------------------------
@@ -305,8 +316,6 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
         results['Delta_u_dot']              # the derivative of Delta_u
         results['delta_dot']                # the derivative of delta_dot
 
-        Optionally, Delta_l_dot might be further given which improves the accuracy of the derivatives
-        in case of strong feedback control activity.  
 
     """
 
@@ -319,6 +328,7 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
         Delta_l_r_dot    = references['Delta_l_r_dot']
         Delta_l_r_dotdot = references['Delta_l_r_dotdot']
 
+        # replace unavalable time derivatives with zero
         if Delta_l_dot is None:
             Delta_l_dot   = 0.0
 
@@ -336,7 +346,7 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
         #
         u = Delta_l_r_dot        + par['k_p'] * (references['Delta_l_r'] - measurements['Delta_l'])
 
-        # derivative of u
+        # time derivative of u: du/dt
         u_dot = Delta_l_r_dotdot + par['k_p'] * ( Delta_l_r_dot - Delta_l_dot )
 
         return u, u_dot
@@ -358,7 +368,6 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
         psi_dot, 
         velocity_dot, 
         Delta_l_r_dotdot, 
-        Delta_l_dot, 
         Ts
     )
 
@@ -368,12 +377,23 @@ def path_following_controller_P( path, x, y, psi, velocity, Delta_l_r = 0.0, Del
 
 
 
+def path_lateral_modification2(
+        Ts, 
+        wheelbase, 
+        input_path, 
+        velocity, 
+        Delta_l_r, 
+        Delta_l_r_dot, 
+        Delta_l_r_dotdot, 
+        par={}
+    ):
 
-
-def path_lateral_modification2(Ts, wheelbase, input_path, velocity, Delta_l_r, Delta_l_r_dot, Delta_l_r_dotdot):
     """
         Take an input path, modify it according to a given lateral distance profile,
         and generate a new path.
+
+        Technically this combines a controller that causes an simulated vehicle to follows 
+        the input path with defined lateral modifications. 
     """
     # create placeholders for the plant output signals
     x       = dy.signal()
@@ -381,19 +401,45 @@ def path_lateral_modification2(Ts, wheelbase, input_path, velocity, Delta_l_r, D
     psi     = dy.signal()
     psi_dot = dy.signal()
 
-    # controller
-    results = path_following_controller_P(
-        input_path,
-        x, y, psi, 
-        velocity, 
-        Delta_l_r        = Delta_l_r, 
-        Delta_l_r_dot    = Delta_l_r_dot,
-        Delta_l_r_dotdot = Delta_l_r_dotdot,
-        psi_dot          = dy.delay(psi_dot),
-        velocity_dot     = dy.float64(0),
-        Ts               = Ts,
-        k_p              = 1
-    )
+    if 'lateral_controller' not in par:
+        # controller
+        results = path_following_controller_P(
+            input_path,
+
+            x, y, psi, 
+            velocity, 
+
+            Delta_l_r        = Delta_l_r, 
+            Delta_l_r_dot    = Delta_l_r_dot,
+            Delta_l_r_dotdot = Delta_l_r_dotdot,
+
+            psi_dot          = dy.delay(psi_dot),
+            velocity_dot     = dy.float64(0),
+
+            Ts               = Ts,
+            k_p              = 1
+        )
+    else:
+
+        # path following and a user-defined linearising controller
+        results = path_following(
+            par['lateral_controller'],            # callback to the implementation of P-control
+            par['lateral_controller_par'],        # parameters to the callback
+
+            input_path,
+
+            x, y, psi, 
+            velocity, 
+
+            Delta_l_r         = Delta_l_r, 
+            Delta_l_r_dot     = Delta_l_r_dot, 
+            Delta_l_r_dotdot  = Delta_l_r_dotdot, 
+
+            psi_dot           = dy.delay(psi_dot), 
+            velocity_dot      = dy.float64(0),  # velocity_dot 
+
+            Ts                = Ts
+        )
 
 
     #

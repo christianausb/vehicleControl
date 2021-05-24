@@ -8,10 +8,16 @@ import vehicle_lib.vehicle_lib as vl
 
 
 
-def async_path_data_handler(input_sample_valid, async_input_data_valid, path_sample, input_signals):
+def async_path_data_handler(
+        input_sample_valid, 
+        async_input_data_valid, 
+        path_sample, 
+        input_signals,
+        par = {},
+        samples_in_buffer = 10000
+    ):
     
     # allocate the buffers to collect the input data
-    samples_in_buffer = 10000
     path = vl.create_path_horizon( samples_in_buffer )
     
     # write new data into the buffer as valid samples arrive 
@@ -35,7 +41,8 @@ def async_path_data_handler(input_sample_valid, async_input_data_valid, path_sam
             velocity,
             Delta_l_r,
             Delta_l_r_dot,
-            Delta_l_r_dotdot
+            Delta_l_r_dotdot,
+            par
         )
         
         
@@ -76,7 +83,12 @@ def async_path_data_handler(input_sample_valid, async_input_data_valid, path_sam
     return output_signals
 
 
-def compile_lateral_path_transformer(wheelbase = 3.0, Ts = 0.01):
+def compile_lateral_path_transformer(
+        wheelbase = 3.0, 
+        Ts = 0.01, 
+        par = {}
+    ):
+
     """
     Build OpenRTDynamics code for the lateral path transformation
     """
@@ -109,7 +121,8 @@ def compile_lateral_path_transformer(wheelbase = 3.0, Ts = 0.01):
         input_sample_valid,
         async_input_data_valid, 
         path_sample, 
-        input_signals
+        input_signals,
+        par,
     )
 
 
@@ -353,9 +366,13 @@ def run_lateral_path_transformer(input_data, output_data, raw_cpp_instance, inpu
 
 class LateralPathTransformer():
 
-    def __init__(self, wheelbase):
+    def __init__(self, wheelbase, par={}):
 
-        self.code_gen_results, self.compiled_system = compile_lateral_path_transformer(wheelbase=wheelbase, Ts=0.01)
+        self.code_gen_results, self.compiled_system = compile_lateral_path_transformer(
+            wheelbase = wheelbase, 
+            Ts        = 0.01,
+            par       = par
+        )
 
 
         # Create an instance of the system (this is an instance of the c++ class wrapped by cppyy)
