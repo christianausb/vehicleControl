@@ -73,7 +73,7 @@ dy.append_output(velocity, 'velocity')
 d_hat = dy.euler_integrator(velocity, Ts, initial_state=0) + path_distance_start_open_loop_control
 
 # estimated travelled distance (d_hat) to path-index 
-open_loop_index, _, _ = tracker_distance_ahead(path, current_index=path_index_start_open_loop_control, distance_ahead=d_hat)
+open_loop_index, _, _, _ = tracker_distance_ahead(path, current_index=path_index_start_open_loop_control, distance_ahead=d_hat)
 
 dy.append_output(open_loop_index,    'open_loop_index')
 

@@ -1,1 +1,194 @@
-{"api_name": "simulation", "api_functions": {"calculate_output": "calcResults_1", "state_update": "updateStates", "reset": "resetStates"}, "io": {"outputs": {"calculate_output": {"names": ["v_star", "psi_rr", "psi_r_dot", "u", "Delta_l_mdl", "Delta_u", "delta_star", "x", "y", "psi", "steering", "x_r", "y_r", "psi_r", "Delta_l"], "cpptypes": ["double", "double", "double", "double", "double", "double", "double", "double", "double", "double", "double", "double", "double", "double", "double"], "properties": [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}], "port_numbers": [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null]}, "state_update": {"names": [], "cpptypes": [], "properties": [], "port_numbers": []}, "reset": {"names": [], "cpptypes": [], "properties": [], "port_numbers": []}}, "inputs": {"calculate_output": {"names": ["velocity"], "cpptypes": ["double"], "properties": [{"default_value": 6.0, "range": [0, 25], "title": "vehicle velocity"}], "port_numbers": [0]}, "state_update": {"names": ["max_lateral_accleration", "max_lateral_velocity", "velocity"], "cpptypes": ["double", "double", "double"], "properties": [{"default_value": 2.0, "range": [1.0, 4.0], "title": "maximal lateral acceleration"}, {"default_value": 1.0, "range": [0, 4.0], "title": "maximal lateral velocity"}, {"default_value": 6.0, "range": [0, 25], "title": "vehicle velocity"}], "port_numbers": [2, 1, 0]}, "reset": {"names": [], "cpptypes": [], "properties": [], "port_numbers": []}}}}
+{
+    "api_name": "simulation",
+    "api_functions": {
+        "calculate_output": "calcResults_1",
+        "state_update": "updateStates",
+        "reset": "resetStates"
+    },
+    "io": {
+        "outputs": {
+            "calculate_output": {
+                "names": [
+                    "v_star",
+                    "psi_rr",
+                    "psi_r_dot",
+                    "u",
+                    "Delta_l_mdl",
+                    "Delta_u",
+                    "delta_star",
+                    "x",
+                    "y",
+                    "psi",
+                    "steering",
+                    "x_r",
+                    "y_r",
+                    "psi_r",
+                    "Delta_l"
+                ],
+                "cpptypes": [
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double"
+                ],
+                "properties": [
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {}
+                ],
+                "port_numbers": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ],
+                "printf_patterns": [
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f"
+                ]
+            },
+            "state_update": {
+                "names": [],
+                "cpptypes": [],
+                "properties": [],
+                "port_numbers": [],
+                "printf_patterns": []
+            },
+            "reset": {
+                "names": [],
+                "cpptypes": [],
+                "properties": [],
+                "port_numbers": [],
+                "printf_patterns": []
+            }
+        },
+        "inputs": {
+            "calculate_output": {
+                "names": [
+                    "velocity"
+                ],
+                "cpptypes": [
+                    "double"
+                ],
+                "properties": [
+                    {
+                        "default_value": 6.0,
+                        "range": [
+                            0,
+                            25
+                        ],
+                        "title": "vehicle velocity"
+                    }
+                ],
+                "port_numbers": [
+                    0
+                ],
+                "printf_patterns": [
+                    "%f"
+                ]
+            },
+            "state_update": {
+                "names": [
+                    "max_lateral_accleration",
+                    "max_lateral_velocity",
+                    "velocity"
+                ],
+                "cpptypes": [
+                    "double",
+                    "double",
+                    "double"
+                ],
+                "properties": [
+                    {
+                        "default_value": 2.0,
+                        "range": [
+                            1.0,
+                            4.0
+                        ],
+                        "title": "maximal lateral acceleration"
+                    },
+                    {
+                        "default_value": 1.0,
+                        "range": [
+                            0,
+                            4.0
+                        ],
+                        "title": "maximal lateral velocity"
+                    },
+                    {
+                        "default_value": 6.0,
+                        "range": [
+                            0,
+                            25
+                        ],
+                        "title": "vehicle velocity"
+                    }
+                ],
+                "port_numbers": [
+                    2,
+                    1,
+                    0
+                ],
+                "printf_patterns": [
+                    "%f",
+                    "%f",
+                    "%f"
+                ]
+            },
+            "reset": {
+                "names": [],
+                "cpptypes": [],
+                "properties": [],
+                "port_numbers": [],
+                "printf_patterns": []
+            }
+        }
+    }
+}

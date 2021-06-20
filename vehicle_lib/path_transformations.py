@@ -154,8 +154,8 @@ def compile_lateral_path_transformer(
     dy.append_output(output_signals['elements_free_to_write'],         'elements_free_to_write')
 
     dy.append_output(output_signals['tracked_index'],                  'tracked_index')
-    dy.append_output(output_signals['d_star'],                         'path_d_star')
 
+    dy.append_output(output_signals['d_star'],                         'path_d_star')
     dy.append_output(output_signals['d'],     'path_d')
     dy.append_output(output_signals['x'],     'path_x')
     dy.append_output(output_signals['y'],     'path_y')

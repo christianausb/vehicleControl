@@ -29,6 +29,11 @@ Topics might be (to be further defined)
 - Trailers
 
 
+Example tracks
+--------------
+
+https://github.com/TUMFTM/global_racetrajectory_optimization
+
 Requirements
 ------------
 
