@@ -1,0 +1,512 @@
+{
+    "api_name": "simulation",
+    "api_functions": {
+        "calculate_output": "calcResults_1",
+        "state_update": "updateStates",
+        "reset": "resetStates"
+    },
+    "io": {
+        "outputs": {
+            "calculate_output": {
+                "names": [
+                    "output_valid",
+                    "need_more_path_input_data",
+                    "distance_at_the_end_of_horizon",
+                    "distance_ahead",
+                    "head_index",
+                    "read_position",
+                    "elements_free_to_write",
+                    "tracked_index",
+                    "path_d_star",
+                    "path_d",
+                    "path_x",
+                    "path_y",
+                    "path_psi",
+                    "path_K",
+                    "vehicle_delta",
+                    "vehicle_delta_dot",
+                    "vehicle_psi",
+                    "vehicle_psi_dot",
+                    "velocity"
+                ],
+                "cpptypes": [
+                    "bool",
+                    "bool",
+                    "double",
+                    "double",
+                    "int32_t",
+                    "int32_t",
+                    "int32_t",
+                    "int32_t",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double"
+                ],
+                "properties": [
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {},
+                    {}
+                ],
+                "port_numbers": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ],
+                "printf_patterns": [
+                    "%d",
+                    "%d",
+                    "%f",
+                    "%f",
+                    "%d",
+                    "%d",
+                    "%d",
+                    "%d",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f"
+                ]
+            },
+            "state_update": {
+                "names": [],
+                "cpptypes": [],
+                "properties": [],
+                "port_numbers": [],
+                "printf_patterns": []
+            },
+            "reset": {
+                "names": [],
+                "cpptypes": [],
+                "properties": [],
+                "port_numbers": [],
+                "printf_patterns": []
+            }
+        },
+        "inputs": {
+            "calculate_output": {
+                "names": [
+                    "Delta_l_r_dotdot",
+                    "input_sample_valid",
+                    "Delta_l_r",
+                    "psi0",
+                    "y0",
+                    "d0",
+                    "velocity_",
+                    "Delta_l_r_dot",
+                    "x0"
+                ],
+                "cpptypes": [
+                    "double",
+                    "bool",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double"
+                ],
+                "properties": [
+                    {
+                        "default_value": 0.0,
+                        "range": [
+                            -10,
+                            10
+                        ],
+                        "title": "2nd-order time derivative of lateral deviation to the path [m/s^2]"
+                    },
+                    {
+                        "title": ""
+                    },
+                    {
+                        "default_value": 0.0,
+                        "range": [
+                            -10,
+                            10
+                        ],
+                        "title": "lateral deviation to the path [m]"
+                    },
+                    {
+                        "default_value": 0,
+                        "title": "initial state psi0 [rad]"
+                    },
+                    {
+                        "default_value": 0,
+                        "title": "initial state y0 [m]"
+                    },
+                    {
+                        "default_value": 0,
+                        "title": "initial state d0 [m]"
+                    },
+                    {
+                        "default_value": 1,
+                        "range": [
+                            0,
+                            25
+                        ],
+                        "title": "vehicle velocity [m/s]"
+                    },
+                    {
+                        "default_value": 0.0,
+                        "range": [
+                            -10,
+                            10
+                        ],
+                        "title": "1st-order time derivative of lateral deviation to the path [m/s]"
+                    },
+                    {
+                        "default_value": 0,
+                        "title": "initial state x0 [m]"
+                    }
+                ],
+                "port_numbers": [
+                    5,
+                    13,
+                    3,
+                    9,
+                    8,
+                    6,
+                    2,
+                    4,
+                    7
+                ],
+                "printf_patterns": [
+                    "%f",
+                    "%d",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f"
+                ]
+            },
+            "state_update": {
+                "names": [
+                    "Ts",
+                    "psi_sample",
+                    "x_sample",
+                    "input_sample_valid",
+                    "wheelbase",
+                    "K_sample",
+                    "y_sample",
+                    "d_sample",
+                    "velocity_",
+                    "async_input_data_valid"
+                ],
+                "cpptypes": [
+                    "double",
+                    "double",
+                    "double",
+                    "bool",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "double",
+                    "bool"
+                ],
+                "properties": [
+                    {
+                        "default_value": 0.01,
+                        "title": "sampling time [s]"
+                    },
+                    {
+                        "title": ""
+                    },
+                    {
+                        "title": ""
+                    },
+                    {
+                        "title": ""
+                    },
+                    {
+                        "default_value": 3.0,
+                        "title": "wheelbase (l_r) [m]"
+                    },
+                    {
+                        "title": ""
+                    },
+                    {
+                        "title": ""
+                    },
+                    {
+                        "title": ""
+                    },
+                    {
+                        "default_value": 1,
+                        "range": [
+                            0,
+                            25
+                        ],
+                        "title": "vehicle velocity [m/s]"
+                    },
+                    {
+                        "title": ""
+                    }
+                ],
+                "port_numbers": [
+                    0,
+                    17,
+                    15,
+                    13,
+                    1,
+                    18,
+                    16,
+                    14,
+                    2,
+                    12
+                ],
+                "printf_patterns": [
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%d",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%f",
+                    "%d"
+                ]
+            },
+            "reset": {
+                "names": [],
+                "cpptypes": [],
+                "properties": [],
+                "port_numbers": [],
+                "printf_patterns": []
+            }
+        },
+        "all_inputs_by_port_number": [
+            {
+                "name": "Ts",
+                "properties": {
+                    "default_value": 0.01,
+                    "title": "sampling time [s]"
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "wheelbase",
+                "properties": {
+                    "default_value": 3.0,
+                    "title": "wheelbase (l_r) [m]"
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "velocity_",
+                "properties": {
+                    "default_value": 1,
+                    "range": [
+                        0,
+                        25
+                    ],
+                    "title": "vehicle velocity [m/s]"
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "Delta_l_r",
+                "properties": {
+                    "default_value": 0.0,
+                    "range": [
+                        -10,
+                        10
+                    ],
+                    "title": "lateral deviation to the path [m]"
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "Delta_l_r_dot",
+                "properties": {
+                    "default_value": 0.0,
+                    "range": [
+                        -10,
+                        10
+                    ],
+                    "title": "1st-order time derivative of lateral deviation to the path [m/s]"
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "Delta_l_r_dotdot",
+                "properties": {
+                    "default_value": 0.0,
+                    "range": [
+                        -10,
+                        10
+                    ],
+                    "title": "2nd-order time derivative of lateral deviation to the path [m/s^2]"
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "d0",
+                "properties": {
+                    "default_value": 0,
+                    "title": "initial state d0 [m]"
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "x0",
+                "properties": {
+                    "default_value": 0,
+                    "title": "initial state x0 [m]"
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "y0",
+                "properties": {
+                    "default_value": 0,
+                    "title": "initial state y0 [m]"
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "psi0",
+                "properties": {
+                    "default_value": 0,
+                    "title": "initial state psi0 [rad]"
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "delta0",
+                "properties": {
+                    "default_value": 0,
+                    "title": "initial state delta0 [rad]"
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "delta_dot0",
+                "properties": {
+                    "default_value": 0,
+                    "title": "initial state delta_dot0 [rad/s]"
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "async_input_data_valid",
+                "properties": {
+                    "title": ""
+                },
+                "cpptype": "bool",
+                "printf_patterns": "%d"
+            },
+            {
+                "name": "input_sample_valid",
+                "properties": {
+                    "title": ""
+                },
+                "cpptype": "bool",
+                "printf_patterns": "%d"
+            },
+            {
+                "name": "d_sample",
+                "properties": {
+                    "title": ""
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "x_sample",
+                "properties": {
+                    "title": ""
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "y_sample",
+                "properties": {
+                    "title": ""
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "psi_sample",
+                "properties": {
+                    "title": ""
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            },
+            {
+                "name": "K_sample",
+                "properties": {
+                    "title": ""
+                },
+                "cpptype": "double",
+                "printf_patterns": "%f"
+            }
+        ]
+    }
+}
