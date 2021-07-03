@@ -3,6 +3,7 @@ import numpy as np
 
 import openrtdynamics2.lang as dy
 import openrtdynamics2.py_execute as dyexe
+import openrtdynamics2.targets as tg
 
 import vehicle_lib.vehicle_lib as vl
 
@@ -86,9 +87,11 @@ def async_path_data_handler(
 
 
 def compile_lateral_path_transformer(
-        wheelbase = 3.0, 
-        Ts = 0.01, 
-        par = {}
+        #wheelbase = 3.0, 
+        #Ts = 0.01, 
+        par = {},
+        target_template = None,
+        folder          = None
     ):
 
     """
@@ -98,19 +101,24 @@ def compile_lateral_path_transformer(
     dy.clear()
     system = dy.enter_system()
 
+    # parameters
+    Ts        = dy.system_input( dy.DataTypeFloat64(1), name='Ts',                default_value=0.01, title="sampling time [s]")
+    wheelbase = dy.system_input( dy.DataTypeFloat64(1), name='wheelbase',         default_value=3.0,  title="wheelbase (l_r) [m]")
+
+
     # time-series for velocity, lateral distance, ...
-    velocity               = dy.system_input( dy.DataTypeFloat64(1), name='velocity_',         default_value=1,      value_range=[0, 25],   title="vehicle velocity")
-    Delta_l_r              = dy.system_input( dy.DataTypeFloat64(1), name='Delta_l_r',         default_value=0.0,    value_range=[-10, 10], title="lateral deviation to the path")
-    Delta_l_r_dot          = dy.system_input( dy.DataTypeFloat64(1), name='Delta_l_r_dot',     default_value=0.0,    value_range=[-10, 10], title="1st-order time derivative of lateral deviation to the path")
-    Delta_l_r_dotdot       = dy.system_input( dy.DataTypeFloat64(1), name='Delta_l_r_dotdot',  default_value=0.0,    value_range=[-10, 10], title="2nd-order time derivative of lateral deviation to the path")
+    velocity               = dy.system_input( dy.DataTypeFloat64(1), name='velocity_',         default_value=1,      value_range=[0, 25],   title="vehicle velocity [m/s]")
+    Delta_l_r              = dy.system_input( dy.DataTypeFloat64(1), name='Delta_l_r',         default_value=0.0,    value_range=[-10, 10], title="lateral deviation to the path [m]")
+    Delta_l_r_dot          = dy.system_input( dy.DataTypeFloat64(1), name='Delta_l_r_dot',     default_value=0.0,    value_range=[-10, 10], title="1st-order time derivative of lateral deviation to the path [m/s]")
+    Delta_l_r_dotdot       = dy.system_input( dy.DataTypeFloat64(1), name='Delta_l_r_dotdot',  default_value=0.0,    value_range=[-10, 10], title="2nd-order time derivative of lateral deviation to the path [m/s^2]")
 
     # initial states of the vehicle
-    d0         = dy.system_input( dy.DataTypeFloat64(1), name='d0',         default_value=0, title="initial state d0")
-    x0         = dy.system_input( dy.DataTypeFloat64(1), name='x0',         default_value=0, title="initial state x0")
-    y0         = dy.system_input( dy.DataTypeFloat64(1), name='y0',         default_value=0, title="initial state y0")
-    psi0       = dy.system_input( dy.DataTypeFloat64(1), name='psi0',       default_value=0, title="initial state psi0")
-    delta0     = dy.system_input( dy.DataTypeFloat64(1), name='delta0',     default_value=0, title="initial state delta0")
-    delta_dot0 = dy.system_input( dy.DataTypeFloat64(1), name='delta_dot0', default_value=0, title="initial state delta_dot0")
+    d0         = dy.system_input( dy.DataTypeFloat64(1), name='d0',         default_value=0, title="initial state d0 [m]")
+    x0         = dy.system_input( dy.DataTypeFloat64(1), name='x0',         default_value=0, title="initial state x0 [m]")
+    y0         = dy.system_input( dy.DataTypeFloat64(1), name='y0',         default_value=0, title="initial state y0 [m]")
+    psi0       = dy.system_input( dy.DataTypeFloat64(1), name='psi0',       default_value=0, title="initial state psi0 [rad]")
+    delta0     = dy.system_input( dy.DataTypeFloat64(1), name='delta0',     default_value=0, title="initial state delta0 [rad]")
+    delta_dot0 = dy.system_input( dy.DataTypeFloat64(1), name='delta_dot0', default_value=0, title="initial state delta_dot0 [rad/s]")
 
     # control inputs
     async_input_data_valid = dy.system_input( dy.DataTypeBoolean(1), name='async_input_data_valid')
@@ -172,8 +180,12 @@ def compile_lateral_path_transformer(
 
 
     # generate code
+    if target_template is None:
+        target_template = tg.TargetCppMinimal()
+
     code_gen_results = dy.generate_code(
-        template=dy.TargetRawCpp(enable_tracing=False)
+        template = target_template,
+        folder   = folder
     )
 
     compiled_system = dyexe.CompiledCode(code_gen_results)
@@ -274,8 +286,6 @@ def run_lateral_path_transformer(
     # simulate n steps
     n = len( input_sequence['Delta_l_r'] )-1
 
-    #n = 20
-
     # storage for the output data
     path = {}
     path['D']   = math.nan * np.zeros(n)
@@ -312,8 +322,8 @@ def run_lateral_path_transformer(
     raw_cpp_instance.step(output_data, input_data, False, False, True)
 
     # pre-fill path horizon; could be omitted, however, then the controller will ask for more data by itself 
-    for i in range(0,10):
-#    while True:
+#    for i in range(0,10):
+    while True:
     
         reached_end = put_input_path_sample( output_data, input_data, raw_cpp_instance, input_path, input_data_read_index )
         if reached_end:
@@ -400,11 +410,9 @@ def run_lateral_path_transformer(
 
 class LateralPathTransformer():
 
-    def __init__(self, wheelbase, par={}):
+    def __init__(self, wheelbase, par={}, Ts = 0.01):
 
         self.code_gen_results, self.compiled_system = compile_lateral_path_transformer(
-            wheelbase = wheelbase, 
-            Ts        = 0.01,
             par       = par
         )
 
@@ -415,6 +423,11 @@ class LateralPathTransformer():
         # create data strutures to store I/O data
         self._input_data  = self.compiled_system.system_class.Inputs()
         self._output_data = self.compiled_system.system_class.Outputs()
+
+        # fill-in parameters that are passed via the input signals
+        self._input_data.Ts        = Ts
+        self._input_data.wheelbase = wheelbase
+ 
 
     def run_lateral_path_transformer( self, input_path, lateral_profile, initial_states={} ):
 
