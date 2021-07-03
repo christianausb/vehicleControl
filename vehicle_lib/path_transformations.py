@@ -6,96 +6,25 @@ import openrtdynamics2.py_execute as dyexe
 import openrtdynamics2.targets as tg
 
 import vehicle_lib.vehicle_lib as vl
+from vehicle_lib.path_data import async_path_data_handler
 
 
-
-def async_path_data_handler(
-        input_sample_valid, 
-        async_input_data_valid, 
-        path_sample, 
-        input_signals,
-        d0, x0, y0, psi0, delta0, delta_dot0,
-        par = {},
-        samples_in_buffer = 10000
-    ):
-    
-    # allocate the buffers to collect the input data
-    path = vl.create_path_horizon( samples_in_buffer )
-    
-    # write new data into the buffer as valid samples arrive 
-    with dy.sub_if(async_input_data_valid, subsystem_name='store_input_data') as system:
-        
-        vl.append_to_path_horizon(path, path_sample)
-
-        
-    #
-    # run the controller in case this is requested via 'input_sample_valid'
-    #
-    
-    with dy.sub_if(input_sample_valid, subsystem_name='process_data', prevent_output_computation=True) as system:
-
-        Ts, wheelbase, velocity, Delta_l_r, Delta_l_r_dot, Delta_l_r_dotdot = input_signals
-
-        output_signals = vl.path_lateral_modification2(
-            Ts,
-            wheelbase,
-            path,
-            velocity,
-            Delta_l_r,
-            Delta_l_r_dot,
-            Delta_l_r_dotdot,
-            d0, x0, y0, psi0, delta0, delta_dot0,
-            par
-        )
-        
-        
-        system.set_outputs( output_signals.to_list() )
-    output_signals.replace_signals( system.outputs )
-    
-    
-    # is the controller executed and yielded valid outputs?
-    control_variables_valid = dy.logic_and( input_sample_valid, output_signals['output_valid'] )
-    
-    # sample & hold of some output signals that are needed
-    output_signals['d_star'] = dy.sample_and_hold(
-        output_signals['d_star'], 
-        control_variables_valid, 
-        initial_state = 0 
-    )
-    
-    output_signals['minimal_read_position'] = dy.sample_and_hold(
-        output_signals['minimal_read_position'], 
-        control_variables_valid, 
-        initial_state = 0 
-    )
-    
-
-    # get the length of the horizon
-    output_signals['head_index'], output_signals['distance_at_the_end_of_horizon'] = vl.path_horizon_head_index(path)
-
-
-    # distance_at_the_end_of_horizon = rb.read_from_absolute_index(reference['time'], head_index)
-    output_signals['distance_ahead'] = output_signals['distance_at_the_end_of_horizon'] - output_signals['d_star']
-
-
-    # compute the number of elements in the circular buffer that are free to write
-    output_signals['elements_free_to_write'] = samples_in_buffer - ( output_signals['head_index'] - output_signals['minimal_read_position'] + 1 )
-
-    
-    
-    return output_signals
 
 
 def compile_lateral_path_transformer(
-        #wheelbase = 3.0, 
-        #Ts = 0.01, 
         par = {},
-        target_template = None,
-        folder          = None
+        target_template   = None,
+        folder            = None,
+        samples_in_buffer = 10000
     ):
 
     """
     Build OpenRTDynamics code for the lateral path transformation
+
+    par               - optional parameters for the model (unused so far)
+    target_template   - the openrtdynamics code generation terget template to use
+    folder            - the folder to which the generated files are written 
+    samples_in_buffer - the size of the buffer storing the samples for the input path    
     """
 
     dy.clear()
@@ -124,7 +53,7 @@ def compile_lateral_path_transformer(
     async_input_data_valid = dy.system_input( dy.DataTypeBoolean(1), name='async_input_data_valid')
     input_sample_valid     = dy.system_input( dy.DataTypeBoolean(1), name='input_sample_valid')
 
-    # async path samples
+    # inputs for asynchronously arriving path samples
     path_sample = {}
     path_sample['d']   = dy.system_input( dy.DataTypeFloat64(1), name='d_sample')
     path_sample['x']   = dy.system_input( dy.DataTypeFloat64(1), name='x_sample')
@@ -132,26 +61,39 @@ def compile_lateral_path_transformer(
     path_sample['psi'] = dy.system_input( dy.DataTypeFloat64(1), name='psi_sample')
     path_sample['K']   = dy.system_input( dy.DataTypeFloat64(1), name='K_sample')
 
-
-
-    input_signals = Ts, wheelbase, velocity, Delta_l_r, Delta_l_r_dot, Delta_l_r_dotdot
-
+    #
+    # combine all input signals in a structure that serve as parameters to the 
+    # callback function (the embedded system) vl.path_lateral_modification2
+    #
+    input_signals = {
+        'Ts' : Ts,
+        'wheelbase' : wheelbase,
+        'velocity'  : velocity,
+        'Delta_l_r' : Delta_l_r,
+        'Delta_l_r_dot' : Delta_l_r_dot,
+        'Delta_l_r_dotdot' : Delta_l_r_dotdot, 
+        'd0' : d0,
+        'x0' : x0,
+        'y0' : y0,
+        'psi0' : psi0,
+        'delta0' : delta0,
+        'delta_dot0' : delta_dot0
+    }
 
     output_signals = async_path_data_handler(
         input_sample_valid,
         async_input_data_valid, 
         path_sample, 
+        vl.path_lateral_modification2,
         input_signals,
-        d0, x0, y0, psi0, delta0, delta_dot0,
         par,
+        samples_in_buffer
     )
 
 
     #
-    # outputs: these are available for visualization in the html set-up
+    # outputs
     #
-
-
 
     dy.append_output(output_signals['output_valid'],                   'output_valid')
     dy.append_output(output_signals['need_more_path_input_data'],      'need_more_path_input_data')

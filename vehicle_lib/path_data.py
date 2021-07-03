@@ -189,6 +189,83 @@ def sample_path_linear_interpolation(path, i_s, i_e, interpolation_factor):
 
 
 
+#
+# async path samples / streaming of the path
+#
+
+def async_path_data_handler(
+        input_sample_valid, 
+        async_input_data_valid, 
+        path_sample,
+        embedded_system, 
+        input_signals,
+        par = {},
+        samples_in_buffer = 10000
+    ):
+    
+    # allocate the buffers to collect the input data
+    path = create_path_horizon( samples_in_buffer )
+    
+    # write new data into the buffer as valid samples arrive 
+    with dy.sub_if(async_input_data_valid, subsystem_name='store_input_data') as system:
+        
+        append_to_path_horizon(path, path_sample)
+
+        
+    #
+    # run the controller in case this is requested via 'input_sample_valid'
+    #
+
+    with dy.sub_if(input_sample_valid, subsystem_name='process_data', prevent_output_computation=True) as system:
+
+        output_signals = embedded_system(
+            path,
+            par,
+            **input_signals
+        )
+                
+        system.set_outputs( output_signals.to_list() )
+    output_signals.replace_signals( system.outputs )
+    
+    
+    # is the controller executed and yielded valid outputs?
+    control_variables_valid = dy.logic_and( input_sample_valid, output_signals['output_valid'] )
+    
+    # sample & hold of some output signals that are needed
+    output_signals['d_star'] = dy.sample_and_hold(
+        output_signals['d_star'], 
+        control_variables_valid, 
+        initial_state = 0 
+    )
+    
+    output_signals['minimal_read_position'] = dy.sample_and_hold(
+        output_signals['minimal_read_position'], 
+        control_variables_valid, 
+        initial_state = 0 
+    )
+    
+
+    # get the length of the horizon
+    output_signals['head_index'], output_signals['distance_at_the_end_of_horizon'] = path_horizon_head_index(path)
+
+
+    # distance_at_the_end_of_horizon = rb.read_from_absolute_index(reference['time'], head_index)
+    output_signals['distance_ahead'] = output_signals['distance_at_the_end_of_horizon'] - output_signals['d_star']
+
+
+    # compute the number of elements in the circular buffer that are free to write
+    output_signals['elements_free_to_write'] = samples_in_buffer - ( output_signals['head_index'] - output_signals['minimal_read_position'] + 1 )
+
+    
+    
+    return output_signals
+
+
+
+#
+# data import
+#
+
 def load_path_from_cvs_TUMFTM(filename : str, delimiter=';'):
     """
         read CVS data as produced by 

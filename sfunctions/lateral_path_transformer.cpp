@@ -194,7 +194,7 @@ typedef CircularBuffer *CircularBufferPtr;
 
       }
       // API-function updateStates
-      void updateStates(CircularBufferPtr s21, CircularBufferPtr s24, double psi_sample, double x_sample, CircularBufferPtr s20, CircularBufferPtr s23, double K_sample, double y_sample, double d_sample, CircularBufferPtr s22) { // created by cpp_define_function
+      void updateStates(CircularBufferPtr s21, double psi_sample, CircularBufferPtr s24, double x_sample, CircularBufferPtr s20, CircularBufferPtr s23, double K_sample, double y_sample, double d_sample, CircularBufferPtr s22) { // created by cpp_define_function
 
 
         // restoring the signals  from the states 
@@ -241,8 +241,8 @@ typedef CircularBuffer *CircularBufferPtr;
       // all system inputs and outputs combined
       struct Inputs{
         CircularBufferPtr s21;
-        CircularBufferPtr s24;
         double psi_sample;
+        CircularBufferPtr s24;
         double x_sample;
         CircularBufferPtr s20;
         CircularBufferPtr s23;
@@ -274,24 +274,20 @@ typedef CircularBuffer *CircularBufferPtr;
 
 
           // state update
+          int32_t block_52_mem;
           double block_70_mem;
           int32_t block_67_mem;
-          int32_t block_52_mem;
 
 
           //
           // cached output values
           //
 
-          double s83__block_70;
-          int32_t s80_shared_counter__block_67;
-          int32_t s81__block_68;
-          bool s82__block_69;
-          double s84_J_star__block_71;
           int32_t s66__block_53;
           int32_t s65_Delta_index__block_52;
           int32_t s64_Delta_index__block_51;
           int32_t s67_index_to_investigate_index_to_investigate__block_54;
+          bool s85_reached_the_end_of_currently_available_path_data__block_72;
           double s68__block_55;
           double s70__block_57;
           double s72__block_59;
@@ -300,9 +296,12 @@ typedef CircularBuffer *CircularBufferPtr;
           double s73__block_60;
           double s74__block_61;
           double s75_J_to_verify_J_to_verify__block_62;
+          double s83__block_70;
+          int32_t s80_shared_counter__block_67;
+          int32_t s81__block_68;
+          bool s82__block_69;
+          double s84_J_star__block_71;
           bool s76_step_caused_improvement__block_63;
-          double s77_J_star__block_64;
-          bool s85_reached_the_end_of_currently_available_path_data__block_72;
           bool s91_reached_minimum__block_78;
           int32_t s92__block_79;
           int32_t s86__block_73;
@@ -310,15 +309,16 @@ typedef CircularBuffer *CircularBufferPtr;
           int32_t s88__block_75;
           bool s90__block_77;
           int32_t s93_loop_until__block_80;
+          double s77_J_star__block_64;
           int32_t s94__block_81;
           int32_t s95_index_head__block_82;
 
           // API-function resetStates
           void resetStates() { // created by cpp_define_function
 
+            block_52_mem = 0;
             block_70_mem = 0.0;
             block_67_mem = 0;
-            block_52_mem = 0;
           }
           // API-function updateStates
           void updateStates() { // created by cpp_define_function
@@ -326,16 +326,12 @@ typedef CircularBuffer *CircularBufferPtr;
             int32_t s79;
 
 
-            // restoring the signals s83, s80_shared_counter, s81, s82, s84_J_star, s66, s65_Delta_index, s64_Delta_index, s67_index_to_investigate_index_to_investigate, s68, s70, s72, s69, s71, s73, s74, s75_J_to_verify_J_to_verify, s76_step_caused_improvement, s77_J_star, s85_reached_the_end_of_currently_available_path_data, s91_reached_minimum, s92, s86, s87, s88, s90, s93_loop_until, s94, s95_index_head from the states 
-            double &s83 = s83__block_70;
-            int32_t &s80_shared_counter = s80_shared_counter__block_67;
-            int32_t &s81 = s81__block_68;
-            bool &s82 = s82__block_69;
-            double &s84_J_star = s84_J_star__block_71;
+            // restoring the signals s66, s65_Delta_index, s64_Delta_index, s67_index_to_investigate_index_to_investigate, s85_reached_the_end_of_currently_available_path_data, s68, s70, s72, s69, s71, s73, s74, s75_J_to_verify_J_to_verify, s83, s80_shared_counter, s81, s82, s84_J_star, s76_step_caused_improvement, s91_reached_minimum, s92, s86, s87, s88, s90, s93_loop_until, s77_J_star, s94, s95_index_head from the states 
             int32_t &s66 = s66__block_53;
             int32_t &s65_Delta_index = s65_Delta_index__block_52;
             int32_t &s64_Delta_index = s64_Delta_index__block_51;
             int32_t &s67_index_to_investigate_index_to_investigate = s67_index_to_investigate_index_to_investigate__block_54;
+            bool &s85_reached_the_end_of_currently_available_path_data = s85_reached_the_end_of_currently_available_path_data__block_72;
             double &s68 = s68__block_55;
             double &s70 = s70__block_57;
             double &s72 = s72__block_59;
@@ -344,9 +340,12 @@ typedef CircularBuffer *CircularBufferPtr;
             double &s73 = s73__block_60;
             double &s74 = s74__block_61;
             double &s75_J_to_verify_J_to_verify = s75_J_to_verify_J_to_verify__block_62;
+            double &s83 = s83__block_70;
+            int32_t &s80_shared_counter = s80_shared_counter__block_67;
+            int32_t &s81 = s81__block_68;
+            bool &s82 = s82__block_69;
+            double &s84_J_star = s84_J_star__block_71;
             bool &s76_step_caused_improvement = s76_step_caused_improvement__block_63;
-            double &s77_J_star = s77_J_star__block_64;
-            bool &s85_reached_the_end_of_currently_available_path_data = s85_reached_the_end_of_currently_available_path_data__block_72;
             bool &s91_reached_minimum = s91_reached_minimum__block_78;
             int32_t &s92 = s92__block_79;
             int32_t &s86 = s86__block_73;
@@ -354,6 +353,7 @@ typedef CircularBuffer *CircularBufferPtr;
             int32_t &s88 = s88__block_75;
             bool &s90 = s90__block_77;
             int32_t &s93_loop_until = s93_loop_until__block_80;
+            double &s77_J_star = s77_J_star__block_64;
             int32_t &s94 = s94__block_81;
             int32_t &s95_index_head = s95_index_head__block_82;
 
@@ -365,17 +365,12 @@ typedef CircularBuffer *CircularBufferPtr;
             s78_cnt_increase = 1;
             s79 = s80_shared_counter + s78_cnt_increase;
 
+            block_52_mem = s64_Delta_index;
             block_70_mem = s77_J_star;
             block_67_mem = s79;
-            block_52_mem = s64_Delta_index;
           }
           // API-function calcResults_1 to compute: s65_Delta_index, s77_J_star, s91_reached_minimum, s85_reached_the_end_of_currently_available_path_data, s95_index_head, s67_index_to_investigate_index_to_investigate, s75_J_to_verify_J_to_verify, s93_loop_until
-          void calcResults_1(int32_t &s65_Delta_index, double &s77_J_star, bool &s91_reached_minimum, bool &s85_reached_the_end_of_currently_available_path_data, int32_t &s95_index_head, int32_t &s67_index_to_investigate_index_to_investigate, double &s75_J_to_verify_J_to_verify, int32_t &s93_loop_until, double s46_J_star_0, int32_t s33, int32_t s112_Delta_index_track, int32_t s63_search_index_increment, CircularBufferPtr s21, double s371_x, CircularBufferPtr s22, double s372_y, int32_t s36_index_head, CircularBufferPtr s20) { // created by cpp_define_function
-            double s83;
-            int32_t s80_shared_counter;
-            int32_t s81;
-            bool s82;
-            double s84_J_star;
+          void calcResults_1(int32_t &s65_Delta_index, double &s77_J_star, bool &s91_reached_minimum, bool &s85_reached_the_end_of_currently_available_path_data, int32_t &s95_index_head, int32_t &s67_index_to_investigate_index_to_investigate, double &s75_J_to_verify_J_to_verify, int32_t &s93_loop_until, int32_t s33, int32_t s112_Delta_index_track, int32_t s63_search_index_increment, int32_t s36_index_head, CircularBufferPtr s21, double s371_x, CircularBufferPtr s22, double s372_y, double s46_J_star_0, CircularBufferPtr s20) { // created by cpp_define_function
             int32_t s66;
             int32_t s64_Delta_index;
             double s68;
@@ -385,6 +380,11 @@ typedef CircularBuffer *CircularBufferPtr;
             double s71;
             double s73;
             double s74;
+            double s83;
+            int32_t s80_shared_counter;
+            int32_t s81;
+            bool s82;
+            double s84_J_star;
             bool s76_step_caused_improvement;
             int32_t s92;
             int32_t s86;
@@ -394,23 +394,15 @@ typedef CircularBuffer *CircularBufferPtr;
             int32_t s94;
 
 
-            // calculating the block outputs in the following order s83, s80_shared_counter, s81, s82, s84_J_star, s66, s65_Delta_index, s64_Delta_index, s67_index_to_investigate_index_to_investigate, s68, s70, s72, s69, s71, s73, s74, s75_J_to_verify_J_to_verify, s76_step_caused_improvement, s77_J_star, s85_reached_the_end_of_currently_available_path_data, s91_reached_minimum, s92, s86, s87, s88, s90, s93_loop_until, s94, s95_index_head
-            // that depend on s46_J_star_0, s33, s112_Delta_index_track, s63_search_index_increment, s21, s371_x, s22, s372_y, s36_index_head, s20
-            // dependencies that require a state update are s77_J_star, s79, s64_Delta_index 
+            // calculating the block outputs in the following order s66, s65_Delta_index, s64_Delta_index, s67_index_to_investigate_index_to_investigate, s85_reached_the_end_of_currently_available_path_data, s68, s70, s72, s69, s71, s73, s74, s75_J_to_verify_J_to_verify, s83, s80_shared_counter, s81, s82, s84_J_star, s76_step_caused_improvement, s91_reached_minimum, s92, s86, s87, s88, s90, s93_loop_until, s77_J_star, s94, s95_index_head
+            // that depend on s33, s112_Delta_index_track, s63_search_index_increment, s36_index_head, s21, s371_x, s22, s372_y, s46_J_star_0, s20
+            // dependencies that require a state update are s64_Delta_index, s77_J_star, s79 
 
-            s83 = block_70_mem;
-            s80_shared_counter = block_67_mem;
-            s81 = 0;
-            s82 = s80_shared_counter == s81;
-            if (s82) {
-              s84_J_star = s46_J_star_0;
-            } else {
-              s84_J_star = s83;
-            }
             s66 = s33 + s112_Delta_index_track;
             s65_Delta_index = block_52_mem;
             s64_Delta_index = s65_Delta_index + s63_search_index_increment;
             s67_index_to_investigate_index_to_investigate = s66 + s64_Delta_index;
+            s85_reached_the_end_of_currently_available_path_data = s67_index_to_investigate_index_to_investigate >= s36_index_head;
             { // calling the custom c++ function s21->read_from_absolute_index
               double block_55_out0;
               s21->read_from_absolute_index(block_55_out0, s67_index_to_investigate_index_to_investigate);
@@ -427,13 +419,16 @@ typedef CircularBuffer *CircularBufferPtr;
             s73 = s71 * s71;
             s74 = s72 + s73;
             s75_J_to_verify_J_to_verify = sqrt(s74);
-            s76_step_caused_improvement = s75_J_to_verify_J_to_verify < s84_J_star;
-            if (s76_step_caused_improvement) {
-              s77_J_star = s75_J_to_verify_J_to_verify;
+            s83 = block_70_mem;
+            s80_shared_counter = block_67_mem;
+            s81 = 0;
+            s82 = s80_shared_counter == s81;
+            if (s82) {
+              s84_J_star = s46_J_star_0;
             } else {
-              s77_J_star = s84_J_star;
+              s84_J_star = s83;
             }
-            s85_reached_the_end_of_currently_available_path_data = s67_index_to_investigate_index_to_investigate >= s36_index_head;
+            s76_step_caused_improvement = s75_J_to_verify_J_to_verify < s84_J_star;
             s91_reached_minimum = !s76_step_caused_improvement;
             s92 = s91_reached_minimum  ||  s85_reached_the_end_of_currently_available_path_data;
             s86 = 1;
@@ -445,19 +440,20 @@ typedef CircularBuffer *CircularBufferPtr;
             }
             s90 = s87 <= s88;
             s93_loop_until = s92  ||  s90;
+            if (s76_step_caused_improvement) {
+              s77_J_star = s75_J_to_verify_J_to_verify;
+            } else {
+              s77_J_star = s84_J_star;
+            }
             s94 = 1;
             s95_index_head = s36_index_head * s94;
 
-            // saving the signals s83, s80_shared_counter, s81, s82, s84_J_star, s66, s65_Delta_index, s64_Delta_index, s67_index_to_investigate_index_to_investigate, s68, s70, s72, s69, s71, s73, s74, s75_J_to_verify_J_to_verify, s76_step_caused_improvement, s77_J_star, s85_reached_the_end_of_currently_available_path_data, s91_reached_minimum, s92, s86, s87, s88, s90, s93_loop_until, s94, s95_index_head into the states 
-            s83__block_70 = s83;
-            s80_shared_counter__block_67 = s80_shared_counter;
-            s81__block_68 = s81;
-            s82__block_69 = s82;
-            s84_J_star__block_71 = s84_J_star;
+            // saving the signals s66, s65_Delta_index, s64_Delta_index, s67_index_to_investigate_index_to_investigate, s85_reached_the_end_of_currently_available_path_data, s68, s70, s72, s69, s71, s73, s74, s75_J_to_verify_J_to_verify, s83, s80_shared_counter, s81, s82, s84_J_star, s76_step_caused_improvement, s91_reached_minimum, s92, s86, s87, s88, s90, s93_loop_until, s77_J_star, s94, s95_index_head into the states 
             s66__block_53 = s66;
             s65_Delta_index__block_52 = s65_Delta_index;
             s64_Delta_index__block_51 = s64_Delta_index;
             s67_index_to_investigate_index_to_investigate__block_54 = s67_index_to_investigate_index_to_investigate;
+            s85_reached_the_end_of_currently_available_path_data__block_72 = s85_reached_the_end_of_currently_available_path_data;
             s68__block_55 = s68;
             s70__block_57 = s70;
             s72__block_59 = s72;
@@ -466,9 +462,12 @@ typedef CircularBuffer *CircularBufferPtr;
             s73__block_60 = s73;
             s74__block_61 = s74;
             s75_J_to_verify_J_to_verify__block_62 = s75_J_to_verify_J_to_verify;
+            s83__block_70 = s83;
+            s80_shared_counter__block_67 = s80_shared_counter;
+            s81__block_68 = s81;
+            s82__block_69 = s82;
+            s84_J_star__block_71 = s84_J_star;
             s76_step_caused_improvement__block_63 = s76_step_caused_improvement;
-            s77_J_star__block_64 = s77_J_star;
-            s85_reached_the_end_of_currently_available_path_data__block_72 = s85_reached_the_end_of_currently_available_path_data;
             s91_reached_minimum__block_78 = s91_reached_minimum;
             s92__block_79 = s92;
             s86__block_73 = s86;
@@ -476,21 +475,22 @@ typedef CircularBuffer *CircularBufferPtr;
             s88__block_75 = s88;
             s90__block_77 = s90;
             s93_loop_until__block_80 = s93_loop_until;
+            s77_J_star__block_64 = s77_J_star;
             s94__block_81 = s94;
             s95_index_head__block_82 = s95_index_head;
           }
           // all system inputs and outputs combined
           struct Inputs{
-            double s46_J_star_0;
             CircularBufferPtr s21;
-            int32_t s112_Delta_index_track;
-            double s371_x;
+            double s46_J_star_0;
             int32_t s63_search_index_increment;
-            double s372_y;
-            int32_t s33;
-            int32_t s36_index_head;
-            CircularBufferPtr s20;
             CircularBufferPtr s22;
+            int32_t s36_index_head;
+            int32_t s33;
+            int32_t s112_Delta_index_track;
+            CircularBufferPtr s20;
+            double s371_x;
+            double s372_y;
 
           };
           struct Outputs{
@@ -559,6 +559,8 @@ typedef CircularBuffer *CircularBufferPtr;
         int32_t s96_Delta_index_Delta_index__block_83;
         int32_t s111_Delta_index_track_next__block_92;
         int32_t s113_optimal_index_tracked_index__block_94;
+        bool s98_reached_minimum_minimal_distance_reached__block_83;
+        bool s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data__block_83;
         double s97__block_83;
         int32_t s100__block_83;
         int32_t s103__block_84;
@@ -574,8 +576,6 @@ typedef CircularBuffer *CircularBufferPtr;
         int32_t s114__block_95;
         double s115__block_96;
         double s116_J_star_distance__block_97;
-        bool s98_reached_minimum_minimal_distance_reached__block_83;
-        bool s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data__block_83;
 
         // API-function resetStates
         void resetStates() { // created by cpp_define_function
@@ -585,10 +585,10 @@ typedef CircularBuffer *CircularBufferPtr;
           block_83_subsystem_Sys1003_optim_loop.resetStates();
         }
         // API-function updateStates
-        void updateStates(CircularBufferPtr s21, double s371_x, double s372_y, CircularBufferPtr s20, CircularBufferPtr s22) { // created by cpp_define_function
+        void updateStates(CircularBufferPtr s21, double s371_x, CircularBufferPtr s20, CircularBufferPtr s22, double s372_y) { // created by cpp_define_function
 
 
-          // restoring the signals s33, s112_Delta_index_track, s38, s39, s41, s43, s40, s42, s44, s45, s46_J_star_0, s59, s47, s48, s49, s50, s52, s54, s51, s53, s55, s56, s57, s58, s60, s61, s62, s63_search_index_increment, s34, s35, s36_index_head, s96_Delta_index_Delta_index, s111_Delta_index_track_next, s113_optimal_index_tracked_index, s97, s100, s103, s104, s101, s105, s106, s107, s102, s108, s109, s110, s114, s115, s116_J_star_distance, s98_reached_minimum_minimal_distance_reached, s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data from the states 
+          // restoring the signals s33, s112_Delta_index_track, s38, s39, s41, s43, s40, s42, s44, s45, s46_J_star_0, s59, s47, s48, s49, s50, s52, s54, s51, s53, s55, s56, s57, s58, s60, s61, s62, s63_search_index_increment, s34, s35, s36_index_head, s96_Delta_index_Delta_index, s111_Delta_index_track_next, s113_optimal_index_tracked_index, s98_reached_minimum_minimal_distance_reached, s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data, s97, s100, s103, s104, s101, s105, s106, s107, s102, s108, s109, s110, s114, s115, s116_J_star_distance from the states 
           int32_t &s33 = s33__block_20;
           int32_t &s112_Delta_index_track = s112_Delta_index_track__block_93;
           int32_t &s38 = s38__block_25;
@@ -623,6 +623,8 @@ typedef CircularBuffer *CircularBufferPtr;
           int32_t &s96_Delta_index_Delta_index = s96_Delta_index_Delta_index__block_83;
           int32_t &s111_Delta_index_track_next = s111_Delta_index_track_next__block_92;
           int32_t &s113_optimal_index_tracked_index = s113_optimal_index_tracked_index__block_94;
+          bool &s98_reached_minimum_minimal_distance_reached = s98_reached_minimum_minimal_distance_reached__block_83;
+          bool &s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data = s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data__block_83;
           double &s97 = s97__block_83;
           int32_t &s100 = s100__block_83;
           int32_t &s103 = s103__block_84;
@@ -638,12 +640,10 @@ typedef CircularBuffer *CircularBufferPtr;
           int32_t &s114 = s114__block_95;
           double &s115 = s115__block_96;
           double &s116_J_star_distance = s116_J_star_distance__block_97;
-          bool &s98_reached_minimum_minimal_distance_reached = s98_reached_minimum_minimal_distance_reached__block_83;
-          bool &s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data = s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data__block_83;
 
 
           // calculating the block outputs in the following order 
-          // that depend on s21, s371_x, s372_y, s20, s22
+          // that depend on s21, s371_x, s20, s22, s372_y
           // dependencies that require a state update are  
 
 
@@ -705,9 +705,9 @@ typedef CircularBuffer *CircularBufferPtr;
           double s115;
 
 
-          // calculating the block outputs in the following order s33, s112_Delta_index_track, s38, s39, s41, s43, s40, s42, s44, s45, s46_J_star_0, s59, s47, s48, s49, s50, s52, s54, s51, s53, s55, s56, s57, s58, s60, s61, s62, s63_search_index_increment, s34, s35, s36_index_head, s96_Delta_index_Delta_index, s111_Delta_index_track_next, s113_optimal_index_tracked_index, s97, s100, s103, s104, s101, s105, s106, s107, s102, s108, s109, s110, s114, s115, s116_J_star_distance, s98_reached_minimum_minimal_distance_reached, s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data
+          // calculating the block outputs in the following order s33, s112_Delta_index_track, s38, s39, s41, s43, s40, s42, s44, s45, s46_J_star_0, s59, s47, s48, s49, s50, s52, s54, s51, s53, s55, s56, s57, s58, s60, s61, s62, s63_search_index_increment, s34, s35, s36_index_head, s96_Delta_index_Delta_index, s111_Delta_index_track_next, s113_optimal_index_tracked_index, s98_reached_minimum_minimal_distance_reached, s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data, s97, s100, s103, s104, s101, s105, s106, s107, s102, s108, s109, s110, s114, s115, s116_J_star_distance
           // that depend on s21, s371_x, s22, s372_y, s20
-          // dependencies that require a state update are s111_Delta_index_track_next, s46_J_star_0, s21, s112_Delta_index_track, s371_x, s63_search_index_increment, s372_y, s33, s36_index_head, s20, s22 
+          // dependencies that require a state update are s111_Delta_index_track_next, s21, s46_J_star_0, s63_search_index_increment, s371_x, s36_index_head, s33, s112_Delta_index_track, s20, s22, s372_y 
 
           s33 = 0;
           s112_Delta_index_track = block_93_mem;
@@ -776,14 +776,14 @@ typedef CircularBuffer *CircularBufferPtr;
                 int32_t _s67_index_to_investigate_index_to_investigate;
                 double _s75_J_to_verify_J_to_verify;
                 int32_t _s93_loop_until;
-                block_83_subsystem_Sys1003_optim_loop.calcResults_1(_s65_Delta_index, _s77_J_star, _s91_reached_minimum, _s85_reached_the_end_of_currently_available_path_data, _s95_index_head, _s67_index_to_investigate_index_to_investigate, _s75_J_to_verify_J_to_verify, _s93_loop_until, s46_J_star_0, s33, s112_Delta_index_track, s63_search_index_increment, s21, s371_x, s22, s372_y, s36_index_head, s20);
+                block_83_subsystem_Sys1003_optim_loop.calcResults_1(_s65_Delta_index, _s77_J_star, _s91_reached_minimum, _s85_reached_the_end_of_currently_available_path_data, _s95_index_head, _s67_index_to_investigate_index_to_investigate, _s75_J_to_verify_J_to_verify, _s93_loop_until, s33, s112_Delta_index_track, s63_search_index_increment, s36_index_head, s21, s371_x, s22, s372_y, s46_J_star_0, s20);
                 s96_Delta_index_Delta_index = _s65_Delta_index;
+                s98_reached_minimum_minimal_distance_reached = _s91_reached_minimum;
+                s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data = _s85_reached_the_end_of_currently_available_path_data;
                 s97 = _s77_J_star;
                 s100 = _s95_index_head;
                 s101 = _s67_index_to_investigate_index_to_investigate;
                 s102 = _s75_J_to_verify_J_to_verify;
-                s98_reached_minimum_minimal_distance_reached = _s91_reached_minimum;
-                s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data = _s85_reached_the_end_of_currently_available_path_data;
                 _until_condition = _s93_loop_until;
               }
               { // subsystem Sys1003_optim_loop
@@ -820,7 +820,7 @@ typedef CircularBuffer *CircularBufferPtr;
           s115 = s110 * s114;
           s116_J_star_distance = s97 + s115;
 
-          // saving the signals s33, s112_Delta_index_track, s38, s39, s41, s43, s40, s42, s44, s45, s46_J_star_0, s59, s47, s48, s49, s50, s52, s54, s51, s53, s55, s56, s57, s58, s60, s61, s62, s63_search_index_increment, s34, s35, s36_index_head, s96_Delta_index_Delta_index, s111_Delta_index_track_next, s113_optimal_index_tracked_index, s97, s100, s103, s104, s101, s105, s106, s107, s102, s108, s109, s110, s114, s115, s116_J_star_distance, s98_reached_minimum_minimal_distance_reached, s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data into the states 
+          // saving the signals s33, s112_Delta_index_track, s38, s39, s41, s43, s40, s42, s44, s45, s46_J_star_0, s59, s47, s48, s49, s50, s52, s54, s51, s53, s55, s56, s57, s58, s60, s61, s62, s63_search_index_increment, s34, s35, s36_index_head, s96_Delta_index_Delta_index, s111_Delta_index_track_next, s113_optimal_index_tracked_index, s98_reached_minimum_minimal_distance_reached, s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data, s97, s100, s103, s104, s101, s105, s106, s107, s102, s108, s109, s110, s114, s115, s116_J_star_distance into the states 
           s33__block_20 = s33;
           s112_Delta_index_track__block_93 = s112_Delta_index_track;
           s38__block_25 = s38;
@@ -855,6 +855,8 @@ typedef CircularBuffer *CircularBufferPtr;
           s96_Delta_index_Delta_index__block_83 = s96_Delta_index_Delta_index;
           s111_Delta_index_track_next__block_92 = s111_Delta_index_track_next;
           s113_optimal_index_tracked_index__block_94 = s113_optimal_index_tracked_index;
+          s98_reached_minimum_minimal_distance_reached__block_83 = s98_reached_minimum_minimal_distance_reached;
+          s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data__block_83 = s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data;
           s97__block_83 = s97;
           s100__block_83 = s100;
           s103__block_84 = s103;
@@ -870,16 +872,14 @@ typedef CircularBuffer *CircularBufferPtr;
           s114__block_95 = s114;
           s115__block_96 = s115;
           s116_J_star_distance__block_97 = s116_J_star_distance;
-          s98_reached_minimum_minimal_distance_reached__block_83 = s98_reached_minimum_minimal_distance_reached;
-          s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data__block_83 = s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data;
         }
         // all system inputs and outputs combined
         struct Inputs{
           CircularBufferPtr s21;
           double s371_x;
-          double s372_y;
           CircularBufferPtr s20;
           CircularBufferPtr s22;
+          double s372_y;
 
         };
         struct Outputs{
@@ -913,10 +913,6 @@ typedef CircularBuffer *CircularBufferPtr;
         // cached output values
         //
 
-        double s261__block_238;
-        int32_t s258_shared_counter__block_235;
-        int32_t s259__block_236;
-        bool s260__block_237;
         int32_t s122__block_99;
         int32_t s125__block_102;
         double s126__block_103;
@@ -939,11 +935,11 @@ typedef CircularBuffer *CircularBufferPtr;
         bool s143__block_120;
         int32_t s148__block_125;
         int32_t s149__block_126;
-        double s198__block_175;
+        double s197__block_174;
         int32_t s150__block_127;
         int32_t s151__block_128;
-        double s203__block_180;
-        double s214__block_191;
+        double s202__block_179;
+        double s211__block_188;
         double s124__block_101;
         double s153__block_130;
         double s159__block_136;
@@ -987,9 +983,19 @@ typedef CircularBuffer *CircularBufferPtr;
         double s192__block_169;
         double s193__block_170;
         double s194__block_171;
+        double s212__block_189;
+        double s213_y_r__block_190;
+        double s261__block_238;
+        int32_t s258_shared_counter__block_235;
+        int32_t s259__block_236;
+        bool s260__block_237;
+        double s198__block_175;
+        double s203__block_180;
+        double s214__block_191;
         double s215__block_192;
         double s216__block_193;
         double s262_psi_r__block_239;
+        double s283__block_260;
         double s184__block_161;
         double s185_Delta_l__block_162;
         double s266__block_243;
@@ -1004,43 +1010,6 @@ typedef CircularBuffer *CircularBufferPtr;
         bool s280__block_257;
         double s281__block_258;
         double s282_Delta_u__block_259;
-        double s246__block_223;
-        double s247__block_224;
-        double s248__block_225;
-        double s199__block_176;
-        double s204__block_181;
-        double s217__block_194;
-        double s218__block_195;
-        double s219__block_196;
-        double s249__block_226;
-        double s250__block_227;
-        double s251_v_star__block_228;
-        double s196__block_173;
-        double s201__block_178;
-        double s208__block_185;
-        double s209__block_186;
-        double s210_x_r__block_187;
-        double s263__block_240;
-        double s264__block_241;
-        double s265__block_242;
-        double s252__block_229;
-        double s253_psi_r_dot__block_230;
-        double s310__block_287;
-        double s302__block_279;
-        double s303__block_280;
-        double s270__block_247;
-        double s271__block_248;
-        int32_t s272__block_249;
-        double s273__block_250;
-        double s274__block_251;
-        double s304__block_281;
-        double s305__block_282;
-        double s306__block_283;
-        double s307__block_284;
-        double s308__block_285;
-        double s309_Delta_u_dot__block_286;
-        double s311_delta_dot__block_288;
-        double s283__block_260;
         double s284__block_261;
         double s285__block_262;
         double s286__block_263;
@@ -1059,16 +1028,47 @@ typedef CircularBuffer *CircularBufferPtr;
         bool s299__block_276;
         double s300__block_277;
         double s301_delta__block_278;
-        double s197__block_174;
-        double s202__block_179;
-        double s211__block_188;
-        double s212__block_189;
-        double s213_y_r__block_190;
+        double s302__block_279;
+        double s303__block_280;
+        double s270__block_247;
+        double s271__block_248;
+        int32_t s272__block_249;
+        double s273__block_250;
+        double s274__block_251;
+        double s304__block_281;
+        double s305__block_282;
+        double s306__block_283;
+        double s307__block_284;
+        double s308__block_285;
+        double s309_Delta_u_dot__block_286;
         double s195__block_172;
         double s200__block_177;
         double s205__block_182;
         double s206__block_183;
         double s207_d_star__block_184;
+        double s246__block_223;
+        double s247__block_224;
+        double s248__block_225;
+        double s199__block_176;
+        double s204__block_181;
+        double s217__block_194;
+        double s218__block_195;
+        double s219__block_196;
+        double s249__block_226;
+        double s250__block_227;
+        double s251_v_star__block_228;
+        double s263__block_240;
+        double s264__block_241;
+        double s265__block_242;
+        double s252__block_229;
+        double s253_psi_r_dot__block_230;
+        double s196__block_173;
+        double s201__block_178;
+        double s208__block_185;
+        double s209__block_186;
+        double s210_x_r__block_187;
+        double s310__block_287;
+        double s311_delta_dot__block_288;
 
         // API-function resetStates
         void resetStates() { // created by cpp_define_function
@@ -1084,11 +1084,7 @@ typedef CircularBuffer *CircularBufferPtr;
           int32_t s257;
 
 
-          // restoring the signals s261, s258_shared_counter, s259, s260, s122, s125, s126, s128, s130, s127, s129, s131, s132, s133, s134, s135, s137, s139, s136, s138, s140, s141, s142, s143, s148, s149, s198, s150, s151, s203, s214, s124, s153, s159, s123, s152, s158, s161, s155, s157, s154, s156, s160, s162, s163, s164, s165, s166, s167, s168, s169, s170, s171, s172, s173, s174, s175, s176, s177, s178, s179, s186, s180, s181, s182, s183, s187, s188, s190, s189, s191, s192, s193, s194, s215, s216, s262_psi_r, s184, s185_Delta_l, s266, s267, s268, s269, s275, s276, s277, s278, s279, s280, s281, s282_Delta_u, s246, s247, s248, s199, s204, s217, s218, s219, s249, s250, s251_v_star, s196, s201, s208, s209, s210_x_r, s263, s264, s265, s252, s253_psi_r_dot, s310, s302, s303, s270, s271, s272, s273, s274, s304, s305, s306, s307, s308, s309_Delta_u_dot, s311_delta_dot, s283, s284, s285, s286, s287, s288, s289, s290, s291, s292, s293, s294, s295, s296, s297, s298, s299, s300, s301_delta, s197, s202, s211, s212, s213_y_r, s195, s200, s205, s206, s207_d_star from the states 
-          double &s261 = s261__block_238;
-          int32_t &s258_shared_counter = s258_shared_counter__block_235;
-          int32_t &s259 = s259__block_236;
-          bool &s260 = s260__block_237;
+          // restoring the signals s122, s125, s126, s128, s130, s127, s129, s131, s132, s133, s134, s135, s137, s139, s136, s138, s140, s141, s142, s143, s148, s149, s197, s150, s151, s202, s211, s124, s153, s159, s123, s152, s158, s161, s155, s157, s154, s156, s160, s162, s163, s164, s165, s166, s167, s168, s169, s170, s171, s172, s173, s174, s175, s176, s177, s178, s179, s186, s180, s181, s182, s183, s187, s188, s190, s189, s191, s192, s193, s194, s212, s213_y_r, s261, s258_shared_counter, s259, s260, s198, s203, s214, s215, s216, s262_psi_r, s283, s184, s185_Delta_l, s266, s267, s268, s269, s275, s276, s277, s278, s279, s280, s281, s282_Delta_u, s284, s285, s286, s287, s288, s289, s290, s291, s292, s293, s294, s295, s296, s297, s298, s299, s300, s301_delta, s302, s303, s270, s271, s272, s273, s274, s304, s305, s306, s307, s308, s309_Delta_u_dot, s195, s200, s205, s206, s207_d_star, s246, s247, s248, s199, s204, s217, s218, s219, s249, s250, s251_v_star, s263, s264, s265, s252, s253_psi_r_dot, s196, s201, s208, s209, s210_x_r, s310, s311_delta_dot from the states 
           int32_t &s122 = s122__block_99;
           int32_t &s125 = s125__block_102;
           double &s126 = s126__block_103;
@@ -1111,11 +1107,11 @@ typedef CircularBuffer *CircularBufferPtr;
           bool &s143 = s143__block_120;
           int32_t &s148 = s148__block_125;
           int32_t &s149 = s149__block_126;
-          double &s198 = s198__block_175;
+          double &s197 = s197__block_174;
           int32_t &s150 = s150__block_127;
           int32_t &s151 = s151__block_128;
-          double &s203 = s203__block_180;
-          double &s214 = s214__block_191;
+          double &s202 = s202__block_179;
+          double &s211 = s211__block_188;
           double &s124 = s124__block_101;
           double &s153 = s153__block_130;
           double &s159 = s159__block_136;
@@ -1159,9 +1155,19 @@ typedef CircularBuffer *CircularBufferPtr;
           double &s192 = s192__block_169;
           double &s193 = s193__block_170;
           double &s194 = s194__block_171;
+          double &s212 = s212__block_189;
+          double &s213_y_r = s213_y_r__block_190;
+          double &s261 = s261__block_238;
+          int32_t &s258_shared_counter = s258_shared_counter__block_235;
+          int32_t &s259 = s259__block_236;
+          bool &s260 = s260__block_237;
+          double &s198 = s198__block_175;
+          double &s203 = s203__block_180;
+          double &s214 = s214__block_191;
           double &s215 = s215__block_192;
           double &s216 = s216__block_193;
           double &s262_psi_r = s262_psi_r__block_239;
+          double &s283 = s283__block_260;
           double &s184 = s184__block_161;
           double &s185_Delta_l = s185_Delta_l__block_162;
           double &s266 = s266__block_243;
@@ -1176,43 +1182,6 @@ typedef CircularBuffer *CircularBufferPtr;
           bool &s280 = s280__block_257;
           double &s281 = s281__block_258;
           double &s282_Delta_u = s282_Delta_u__block_259;
-          double &s246 = s246__block_223;
-          double &s247 = s247__block_224;
-          double &s248 = s248__block_225;
-          double &s199 = s199__block_176;
-          double &s204 = s204__block_181;
-          double &s217 = s217__block_194;
-          double &s218 = s218__block_195;
-          double &s219 = s219__block_196;
-          double &s249 = s249__block_226;
-          double &s250 = s250__block_227;
-          double &s251_v_star = s251_v_star__block_228;
-          double &s196 = s196__block_173;
-          double &s201 = s201__block_178;
-          double &s208 = s208__block_185;
-          double &s209 = s209__block_186;
-          double &s210_x_r = s210_x_r__block_187;
-          double &s263 = s263__block_240;
-          double &s264 = s264__block_241;
-          double &s265 = s265__block_242;
-          double &s252 = s252__block_229;
-          double &s253_psi_r_dot = s253_psi_r_dot__block_230;
-          double &s310 = s310__block_287;
-          double &s302 = s302__block_279;
-          double &s303 = s303__block_280;
-          double &s270 = s270__block_247;
-          double &s271 = s271__block_248;
-          int32_t &s272 = s272__block_249;
-          double &s273 = s273__block_250;
-          double &s274 = s274__block_251;
-          double &s304 = s304__block_281;
-          double &s305 = s305__block_282;
-          double &s306 = s306__block_283;
-          double &s307 = s307__block_284;
-          double &s308 = s308__block_285;
-          double &s309_Delta_u_dot = s309_Delta_u_dot__block_286;
-          double &s311_delta_dot = s311_delta_dot__block_288;
-          double &s283 = s283__block_260;
           double &s284 = s284__block_261;
           double &s285 = s285__block_262;
           double &s286 = s286__block_263;
@@ -1231,16 +1200,47 @@ typedef CircularBuffer *CircularBufferPtr;
           bool &s299 = s299__block_276;
           double &s300 = s300__block_277;
           double &s301_delta = s301_delta__block_278;
-          double &s197 = s197__block_174;
-          double &s202 = s202__block_179;
-          double &s211 = s211__block_188;
-          double &s212 = s212__block_189;
-          double &s213_y_r = s213_y_r__block_190;
+          double &s302 = s302__block_279;
+          double &s303 = s303__block_280;
+          double &s270 = s270__block_247;
+          double &s271 = s271__block_248;
+          int32_t &s272 = s272__block_249;
+          double &s273 = s273__block_250;
+          double &s274 = s274__block_251;
+          double &s304 = s304__block_281;
+          double &s305 = s305__block_282;
+          double &s306 = s306__block_283;
+          double &s307 = s307__block_284;
+          double &s308 = s308__block_285;
+          double &s309_Delta_u_dot = s309_Delta_u_dot__block_286;
           double &s195 = s195__block_172;
           double &s200 = s200__block_177;
           double &s205 = s205__block_182;
           double &s206 = s206__block_183;
           double &s207_d_star = s207_d_star__block_184;
+          double &s246 = s246__block_223;
+          double &s247 = s247__block_224;
+          double &s248 = s248__block_225;
+          double &s199 = s199__block_176;
+          double &s204 = s204__block_181;
+          double &s217 = s217__block_194;
+          double &s218 = s218__block_195;
+          double &s219 = s219__block_196;
+          double &s249 = s249__block_226;
+          double &s250 = s250__block_227;
+          double &s251_v_star = s251_v_star__block_228;
+          double &s263 = s263__block_240;
+          double &s264 = s264__block_241;
+          double &s265 = s265__block_242;
+          double &s252 = s252__block_229;
+          double &s253_psi_r_dot = s253_psi_r_dot__block_230;
+          double &s196 = s196__block_173;
+          double &s201 = s201__block_178;
+          double &s208 = s208__block_185;
+          double &s209 = s209__block_186;
+          double &s210_x_r = s210_x_r__block_187;
+          double &s310 = s310__block_287;
+          double &s311_delta_dot = s311_delta_dot__block_288;
 
 
           // calculating the block outputs in the following order s254, s255, s256_cnt_increase, s257
@@ -1262,11 +1262,7 @@ typedef CircularBuffer *CircularBufferPtr;
 
         }
         // API-function calcResults_1 to compute: s309_Delta_u_dot, s311_delta_dot, s210_x_r, s213_y_r, s251_v_star, s207_d_star, s262_psi_r, s253_psi_r_dot, s185_Delta_l, s282_Delta_u, s301_delta
-        void calcResults_1(double &s309_Delta_u_dot, double &s311_delta_dot, double &s210_x_r, double &s213_y_r, double &s251_v_star, double &s207_d_star, double &s262_psi_r, double &s253_psi_r_dot, double &s185_Delta_l, double &s282_Delta_u, double &s301_delta, int32_t s117_tracked_index_tracked_index, double s371_x, CircularBufferPtr s21, double s372_y, CircularBufferPtr s22, CircularBufferPtr s23, double velocity_, double Delta_l_r_dot, double Delta_l_r, CircularBufferPtr s24, double s25, double Delta_l_r_dotdot, double s26, double s373_psi, CircularBufferPtr s20) { // created by cpp_define_function
-          double s261;
-          int32_t s258_shared_counter;
-          int32_t s259;
-          bool s260;
+        void calcResults_1(double &s309_Delta_u_dot, double &s311_delta_dot, double &s210_x_r, double &s213_y_r, double &s251_v_star, double &s207_d_star, double &s262_psi_r, double &s253_psi_r_dot, double &s185_Delta_l, double &s282_Delta_u, double &s301_delta, int32_t s117_tracked_index_tracked_index, double s371_x, CircularBufferPtr s21, double s372_y, CircularBufferPtr s22, CircularBufferPtr s23, double s373_psi, double Delta_l_r_dot, double Delta_l_r, double velocity_, double Delta_l_r_dotdot, double s26, CircularBufferPtr s20, CircularBufferPtr s24, double s25) { // created by cpp_define_function
           int32_t s122;
           int32_t s125;
           double s126;
@@ -1289,11 +1285,11 @@ typedef CircularBuffer *CircularBufferPtr;
           bool s143;
           int32_t s148;
           int32_t s149;
-          double s198;
+          double s197;
           int32_t s150;
           int32_t s151;
-          double s203;
-          double s214;
+          double s202;
+          double s211;
           double s124;
           double s153;
           double s159;
@@ -1337,8 +1333,17 @@ typedef CircularBuffer *CircularBufferPtr;
           double s192;
           double s193;
           double s194;
+          double s212;
+          double s261;
+          int32_t s258_shared_counter;
+          int32_t s259;
+          bool s260;
+          double s198;
+          double s203;
+          double s214;
           double s215;
           double s216;
+          double s283;
           double s184;
           double s266;
           int32_t s267;
@@ -1351,38 +1356,6 @@ typedef CircularBuffer *CircularBufferPtr;
           double s279;
           bool s280;
           double s281;
-          double s246;
-          double s247;
-          double s248;
-          double s199;
-          double s204;
-          double s217;
-          double s218;
-          double s219;
-          double s249;
-          double s250;
-          double s196;
-          double s201;
-          double s208;
-          double s209;
-          double s263;
-          double s264;
-          double s265;
-          double s252;
-          double s310;
-          double s302;
-          double s303;
-          double s270;
-          double s271;
-          int32_t s272;
-          double s273;
-          double s274;
-          double s304;
-          double s305;
-          double s306;
-          double s307;
-          double s308;
-          double s283;
           double s284;
           double s285;
           double s286;
@@ -1400,24 +1373,47 @@ typedef CircularBuffer *CircularBufferPtr;
           double s298;
           bool s299;
           double s300;
-          double s197;
-          double s202;
-          double s211;
-          double s212;
+          double s302;
+          double s303;
+          double s270;
+          double s271;
+          int32_t s272;
+          double s273;
+          double s274;
+          double s304;
+          double s305;
+          double s306;
+          double s307;
+          double s308;
           double s195;
           double s200;
           double s205;
           double s206;
+          double s246;
+          double s247;
+          double s248;
+          double s199;
+          double s204;
+          double s217;
+          double s218;
+          double s219;
+          double s249;
+          double s250;
+          double s263;
+          double s264;
+          double s265;
+          double s252;
+          double s196;
+          double s201;
+          double s208;
+          double s209;
+          double s310;
 
 
-          // calculating the block outputs in the following order s261, s258_shared_counter, s259, s260, s122, s125, s126, s128, s130, s127, s129, s131, s132, s133, s134, s135, s137, s139, s136, s138, s140, s141, s142, s143, s148, s149, s198, s150, s151, s203, s214, s124, s153, s159, s123, s152, s158, s161, s155, s157, s154, s156, s160, s162, s163, s164, s165, s166, s167, s168, s169, s170, s171, s172, s173, s174, s175, s176, s177, s178, s179, s186, s180, s181, s182, s183, s187, s188, s190, s189, s191, s192, s193, s194, s215, s216, s262_psi_r, s184, s185_Delta_l, s266, s267, s268, s269, s275, s276, s277, s278, s279, s280, s281, s282_Delta_u, s246, s247, s248, s199, s204, s217, s218, s219, s249, s250, s251_v_star, s196, s201, s208, s209, s210_x_r, s263, s264, s265, s252, s253_psi_r_dot, s310, s302, s303, s270, s271, s272, s273, s274, s304, s305, s306, s307, s308, s309_Delta_u_dot, s311_delta_dot, s283, s284, s285, s286, s287, s288, s289, s290, s291, s292, s293, s294, s295, s296, s297, s298, s299, s300, s301_delta, s197, s202, s211, s212, s213_y_r, s195, s200, s205, s206, s207_d_star
-          // that depend on s117_tracked_index_tracked_index, s371_x, s21, s372_y, s22, s23, velocity_, Delta_l_r_dot, Delta_l_r, s24, s25, Delta_l_r_dotdot, s26, s373_psi, s20
+          // calculating the block outputs in the following order s122, s125, s126, s128, s130, s127, s129, s131, s132, s133, s134, s135, s137, s139, s136, s138, s140, s141, s142, s143, s148, s149, s197, s150, s151, s202, s211, s124, s153, s159, s123, s152, s158, s161, s155, s157, s154, s156, s160, s162, s163, s164, s165, s166, s167, s168, s169, s170, s171, s172, s173, s174, s175, s176, s177, s178, s179, s186, s180, s181, s182, s183, s187, s188, s190, s189, s191, s192, s193, s194, s212, s213_y_r, s261, s258_shared_counter, s259, s260, s198, s203, s214, s215, s216, s262_psi_r, s283, s184, s185_Delta_l, s266, s267, s268, s269, s275, s276, s277, s278, s279, s280, s281, s282_Delta_u, s284, s285, s286, s287, s288, s289, s290, s291, s292, s293, s294, s295, s296, s297, s298, s299, s300, s301_delta, s302, s303, s270, s271, s272, s273, s274, s304, s305, s306, s307, s308, s309_Delta_u_dot, s195, s200, s205, s206, s207_d_star, s246, s247, s248, s199, s204, s217, s218, s219, s249, s250, s251_v_star, s263, s264, s265, s252, s253_psi_r_dot, s196, s201, s208, s209, s210_x_r, s310, s311_delta_dot
+          // that depend on s117_tracked_index_tracked_index, s371_x, s21, s372_y, s22, s23, s373_psi, Delta_l_r_dot, Delta_l_r, velocity_, Delta_l_r_dotdot, s26, s20, s24, s25
           // dependencies that require a state update are s255, s257 
 
-          s261 = block_238_mem;
-          s258_shared_counter = block_235_mem;
-          s259 = 0;
-          s260 = s258_shared_counter == s259;
           s122 = 1;
           s125 = s117_tracked_index_tracked_index + s122;
           { // calling the custom c++ function s21->read_from_absolute_index
@@ -1460,10 +1456,10 @@ typedef CircularBuffer *CircularBufferPtr;
           } else {
             s149 = s117_tracked_index_tracked_index;
           }
-          { // calling the custom c++ function s23->read_from_absolute_index
-            double block_175_out0;
-            s23->read_from_absolute_index(block_175_out0, s149);
-            s198 = block_175_out0;
+          { // calling the custom c++ function s22->read_from_absolute_index
+            double block_174_out0;
+            s22->read_from_absolute_index(block_174_out0, s149);
+            s197 = block_174_out0;
           }
           s150 = s117_tracked_index_tracked_index + s122;
           if (s143) {
@@ -1471,12 +1467,12 @@ typedef CircularBuffer *CircularBufferPtr;
           } else {
             s151 = s150;
           }
-          { // calling the custom c++ function s23->read_from_absolute_index
-            double block_180_out0;
-            s23->read_from_absolute_index(block_180_out0, s151);
-            s203 = block_180_out0;
+          { // calling the custom c++ function s22->read_from_absolute_index
+            double block_179_out0;
+            s22->read_from_absolute_index(block_179_out0, s151);
+            s202 = block_179_out0;
           }
-          s214 = s203 - s198;
+          s211 = s202 - s197;
           { // calling the custom c++ function s22->read_from_absolute_index
             double block_101_out0;
             s22->read_from_absolute_index(block_101_out0, s117_tracked_index_tracked_index);
@@ -1556,6 +1552,23 @@ typedef CircularBuffer *CircularBufferPtr;
           s192 = s190 + s191;
           s193 = sqrt(s192);
           s194 = s187 / s193;
+          s212 = s211 * s194;
+          s213_y_r = s197 + s212;
+          s261 = block_238_mem;
+          s258_shared_counter = block_235_mem;
+          s259 = 0;
+          s260 = s258_shared_counter == s259;
+          { // calling the custom c++ function s23->read_from_absolute_index
+            double block_175_out0;
+            s23->read_from_absolute_index(block_175_out0, s149);
+            s198 = block_175_out0;
+          }
+          { // calling the custom c++ function s23->read_from_absolute_index
+            double block_180_out0;
+            s23->read_from_absolute_index(block_180_out0, s151);
+            s203 = block_180_out0;
+          }
+          s214 = s203 - s198;
           s215 = s214 * s194;
           s216 = s198 + s215;
           if (s260) {
@@ -1563,6 +1576,7 @@ typedef CircularBuffer *CircularBufferPtr;
           } else {
             s262_psi_r = s261;
           }
+          s283 = s262_psi_r - s373_psi;
           s184 = sin(s179);
           s185_Delta_l = s184 * s183;
           s266 = Delta_l_r - s185_Delta_l;
@@ -1585,59 +1599,6 @@ typedef CircularBuffer *CircularBufferPtr;
             s281 = s278;
           }
           s282_Delta_u = asin(s281);
-          s246 = cos(s282_Delta_u);
-          s247 = velocity_ * s246;
-          s248 = 1;
-          { // calling the custom c++ function s24->read_from_absolute_index
-            double block_176_out0;
-            s24->read_from_absolute_index(block_176_out0, s149);
-            s199 = block_176_out0;
-          }
-          { // calling the custom c++ function s24->read_from_absolute_index
-            double block_181_out0;
-            s24->read_from_absolute_index(block_181_out0, s151);
-            s204 = block_181_out0;
-          }
-          s217 = s204 - s199;
-          s218 = s217 * s194;
-          s219 = s199 + s218;
-          s249 = s185_Delta_l * s219;
-          s250 = s248 - s249;
-          s251_v_star = s247 / s250;
-          { // calling the custom c++ function s21->read_from_absolute_index
-            double block_173_out0;
-            s21->read_from_absolute_index(block_173_out0, s149);
-            s196 = block_173_out0;
-          }
-          { // calling the custom c++ function s21->read_from_absolute_index
-            double block_178_out0;
-            s21->read_from_absolute_index(block_178_out0, s151);
-            s201 = block_178_out0;
-          }
-          s208 = s201 - s196;
-          s209 = s208 * s194;
-          s210_x_r = s196 + s209;
-          s263 = s216 - s262_psi_r;
-          s264 = 1.0;
-          s265 = s263 * s264;
-          s252 = s219 + s265;
-          s253_psi_r_dot = s251_v_star * s252;
-          s310 = s253_psi_r_dot - s25;
-          s302 = s269 / velocity_;
-          s303 = cos(s302);
-          s270 = 0.0;
-          s271 = Delta_l_r_dot - s270;
-          s272 = 1;
-          s273 = s271 * s272;
-          s274 = Delta_l_r_dotdot + s273;
-          s304 = velocity_ * s274;
-          s305 = s26 * s269;
-          s306 = s304 - s305;
-          s307 = s303 * s306;
-          s308 = velocity_ * velocity_;
-          s309_Delta_u_dot = s307 / s308;
-          s311_delta_dot = s310 + s309_Delta_u_dot;
-          s283 = s262_psi_r - s373_psi;
           s284 = s283 + s282_Delta_u;
           s285 = 6.283185307179586;
           s286 = fmod(s284, s285);
@@ -1668,19 +1629,19 @@ typedef CircularBuffer *CircularBufferPtr;
             s300 = s297;
           }
           s301_delta = s296 + s300;
-          { // calling the custom c++ function s22->read_from_absolute_index
-            double block_174_out0;
-            s22->read_from_absolute_index(block_174_out0, s149);
-            s197 = block_174_out0;
-          }
-          { // calling the custom c++ function s22->read_from_absolute_index
-            double block_179_out0;
-            s22->read_from_absolute_index(block_179_out0, s151);
-            s202 = block_179_out0;
-          }
-          s211 = s202 - s197;
-          s212 = s211 * s194;
-          s213_y_r = s197 + s212;
+          s302 = s269 / velocity_;
+          s303 = cos(s302);
+          s270 = 0.0;
+          s271 = Delta_l_r_dot - s270;
+          s272 = 1;
+          s273 = s271 * s272;
+          s274 = Delta_l_r_dotdot + s273;
+          s304 = velocity_ * s274;
+          s305 = s26 * s269;
+          s306 = s304 - s305;
+          s307 = s303 * s306;
+          s308 = velocity_ * velocity_;
+          s309_Delta_u_dot = s307 / s308;
           { // calling the custom c++ function s20->read_from_absolute_index
             double block_172_out0;
             s20->read_from_absolute_index(block_172_out0, s149);
@@ -1694,12 +1655,47 @@ typedef CircularBuffer *CircularBufferPtr;
           s205 = s200 - s195;
           s206 = s205 * s194;
           s207_d_star = s195 + s206;
+          s246 = cos(s282_Delta_u);
+          s247 = velocity_ * s246;
+          s248 = 1;
+          { // calling the custom c++ function s24->read_from_absolute_index
+            double block_176_out0;
+            s24->read_from_absolute_index(block_176_out0, s149);
+            s199 = block_176_out0;
+          }
+          { // calling the custom c++ function s24->read_from_absolute_index
+            double block_181_out0;
+            s24->read_from_absolute_index(block_181_out0, s151);
+            s204 = block_181_out0;
+          }
+          s217 = s204 - s199;
+          s218 = s217 * s194;
+          s219 = s199 + s218;
+          s249 = s185_Delta_l * s219;
+          s250 = s248 - s249;
+          s251_v_star = s247 / s250;
+          s263 = s216 - s262_psi_r;
+          s264 = 1.0;
+          s265 = s263 * s264;
+          s252 = s219 + s265;
+          s253_psi_r_dot = s251_v_star * s252;
+          { // calling the custom c++ function s21->read_from_absolute_index
+            double block_173_out0;
+            s21->read_from_absolute_index(block_173_out0, s149);
+            s196 = block_173_out0;
+          }
+          { // calling the custom c++ function s21->read_from_absolute_index
+            double block_178_out0;
+            s21->read_from_absolute_index(block_178_out0, s151);
+            s201 = block_178_out0;
+          }
+          s208 = s201 - s196;
+          s209 = s208 * s194;
+          s210_x_r = s196 + s209;
+          s310 = s253_psi_r_dot - s25;
+          s311_delta_dot = s310 + s309_Delta_u_dot;
 
-          // saving the signals s261, s258_shared_counter, s259, s260, s122, s125, s126, s128, s130, s127, s129, s131, s132, s133, s134, s135, s137, s139, s136, s138, s140, s141, s142, s143, s148, s149, s198, s150, s151, s203, s214, s124, s153, s159, s123, s152, s158, s161, s155, s157, s154, s156, s160, s162, s163, s164, s165, s166, s167, s168, s169, s170, s171, s172, s173, s174, s175, s176, s177, s178, s179, s186, s180, s181, s182, s183, s187, s188, s190, s189, s191, s192, s193, s194, s215, s216, s262_psi_r, s184, s185_Delta_l, s266, s267, s268, s269, s275, s276, s277, s278, s279, s280, s281, s282_Delta_u, s246, s247, s248, s199, s204, s217, s218, s219, s249, s250, s251_v_star, s196, s201, s208, s209, s210_x_r, s263, s264, s265, s252, s253_psi_r_dot, s310, s302, s303, s270, s271, s272, s273, s274, s304, s305, s306, s307, s308, s309_Delta_u_dot, s311_delta_dot, s283, s284, s285, s286, s287, s288, s289, s290, s291, s292, s293, s294, s295, s296, s297, s298, s299, s300, s301_delta, s197, s202, s211, s212, s213_y_r, s195, s200, s205, s206, s207_d_star into the states 
-          s261__block_238 = s261;
-          s258_shared_counter__block_235 = s258_shared_counter;
-          s259__block_236 = s259;
-          s260__block_237 = s260;
+          // saving the signals s122, s125, s126, s128, s130, s127, s129, s131, s132, s133, s134, s135, s137, s139, s136, s138, s140, s141, s142, s143, s148, s149, s197, s150, s151, s202, s211, s124, s153, s159, s123, s152, s158, s161, s155, s157, s154, s156, s160, s162, s163, s164, s165, s166, s167, s168, s169, s170, s171, s172, s173, s174, s175, s176, s177, s178, s179, s186, s180, s181, s182, s183, s187, s188, s190, s189, s191, s192, s193, s194, s212, s213_y_r, s261, s258_shared_counter, s259, s260, s198, s203, s214, s215, s216, s262_psi_r, s283, s184, s185_Delta_l, s266, s267, s268, s269, s275, s276, s277, s278, s279, s280, s281, s282_Delta_u, s284, s285, s286, s287, s288, s289, s290, s291, s292, s293, s294, s295, s296, s297, s298, s299, s300, s301_delta, s302, s303, s270, s271, s272, s273, s274, s304, s305, s306, s307, s308, s309_Delta_u_dot, s195, s200, s205, s206, s207_d_star, s246, s247, s248, s199, s204, s217, s218, s219, s249, s250, s251_v_star, s263, s264, s265, s252, s253_psi_r_dot, s196, s201, s208, s209, s210_x_r, s310, s311_delta_dot into the states 
           s122__block_99 = s122;
           s125__block_102 = s125;
           s126__block_103 = s126;
@@ -1722,11 +1718,11 @@ typedef CircularBuffer *CircularBufferPtr;
           s143__block_120 = s143;
           s148__block_125 = s148;
           s149__block_126 = s149;
-          s198__block_175 = s198;
+          s197__block_174 = s197;
           s150__block_127 = s150;
           s151__block_128 = s151;
-          s203__block_180 = s203;
-          s214__block_191 = s214;
+          s202__block_179 = s202;
+          s211__block_188 = s211;
           s124__block_101 = s124;
           s153__block_130 = s153;
           s159__block_136 = s159;
@@ -1770,9 +1766,19 @@ typedef CircularBuffer *CircularBufferPtr;
           s192__block_169 = s192;
           s193__block_170 = s193;
           s194__block_171 = s194;
+          s212__block_189 = s212;
+          s213_y_r__block_190 = s213_y_r;
+          s261__block_238 = s261;
+          s258_shared_counter__block_235 = s258_shared_counter;
+          s259__block_236 = s259;
+          s260__block_237 = s260;
+          s198__block_175 = s198;
+          s203__block_180 = s203;
+          s214__block_191 = s214;
           s215__block_192 = s215;
           s216__block_193 = s216;
           s262_psi_r__block_239 = s262_psi_r;
+          s283__block_260 = s283;
           s184__block_161 = s184;
           s185_Delta_l__block_162 = s185_Delta_l;
           s266__block_243 = s266;
@@ -1787,43 +1793,6 @@ typedef CircularBuffer *CircularBufferPtr;
           s280__block_257 = s280;
           s281__block_258 = s281;
           s282_Delta_u__block_259 = s282_Delta_u;
-          s246__block_223 = s246;
-          s247__block_224 = s247;
-          s248__block_225 = s248;
-          s199__block_176 = s199;
-          s204__block_181 = s204;
-          s217__block_194 = s217;
-          s218__block_195 = s218;
-          s219__block_196 = s219;
-          s249__block_226 = s249;
-          s250__block_227 = s250;
-          s251_v_star__block_228 = s251_v_star;
-          s196__block_173 = s196;
-          s201__block_178 = s201;
-          s208__block_185 = s208;
-          s209__block_186 = s209;
-          s210_x_r__block_187 = s210_x_r;
-          s263__block_240 = s263;
-          s264__block_241 = s264;
-          s265__block_242 = s265;
-          s252__block_229 = s252;
-          s253_psi_r_dot__block_230 = s253_psi_r_dot;
-          s310__block_287 = s310;
-          s302__block_279 = s302;
-          s303__block_280 = s303;
-          s270__block_247 = s270;
-          s271__block_248 = s271;
-          s272__block_249 = s272;
-          s273__block_250 = s273;
-          s274__block_251 = s274;
-          s304__block_281 = s304;
-          s305__block_282 = s305;
-          s306__block_283 = s306;
-          s307__block_284 = s307;
-          s308__block_285 = s308;
-          s309_Delta_u_dot__block_286 = s309_Delta_u_dot;
-          s311_delta_dot__block_288 = s311_delta_dot;
-          s283__block_260 = s283;
           s284__block_261 = s284;
           s285__block_262 = s285;
           s286__block_263 = s286;
@@ -1842,35 +1811,66 @@ typedef CircularBuffer *CircularBufferPtr;
           s299__block_276 = s299;
           s300__block_277 = s300;
           s301_delta__block_278 = s301_delta;
-          s197__block_174 = s197;
-          s202__block_179 = s202;
-          s211__block_188 = s211;
-          s212__block_189 = s212;
-          s213_y_r__block_190 = s213_y_r;
+          s302__block_279 = s302;
+          s303__block_280 = s303;
+          s270__block_247 = s270;
+          s271__block_248 = s271;
+          s272__block_249 = s272;
+          s273__block_250 = s273;
+          s274__block_251 = s274;
+          s304__block_281 = s304;
+          s305__block_282 = s305;
+          s306__block_283 = s306;
+          s307__block_284 = s307;
+          s308__block_285 = s308;
+          s309_Delta_u_dot__block_286 = s309_Delta_u_dot;
           s195__block_172 = s195;
           s200__block_177 = s200;
           s205__block_182 = s205;
           s206__block_183 = s206;
           s207_d_star__block_184 = s207_d_star;
+          s246__block_223 = s246;
+          s247__block_224 = s247;
+          s248__block_225 = s248;
+          s199__block_176 = s199;
+          s204__block_181 = s204;
+          s217__block_194 = s217;
+          s218__block_195 = s218;
+          s219__block_196 = s219;
+          s249__block_226 = s249;
+          s250__block_227 = s250;
+          s251_v_star__block_228 = s251_v_star;
+          s263__block_240 = s263;
+          s264__block_241 = s264;
+          s265__block_242 = s265;
+          s252__block_229 = s252;
+          s253_psi_r_dot__block_230 = s253_psi_r_dot;
+          s196__block_173 = s196;
+          s201__block_178 = s201;
+          s208__block_185 = s208;
+          s209__block_186 = s209;
+          s210_x_r__block_187 = s210_x_r;
+          s310__block_287 = s310;
+          s311_delta_dot__block_288 = s311_delta_dot;
         }
         // all system inputs and outputs combined
         struct Inputs{
-          int32_t s117_tracked_index_tracked_index;
           CircularBufferPtr s21;
-          double Ts;
+          double Delta_l_r;
           CircularBufferPtr s24;
-          double s371_x;
-          double s372_y;
+          CircularBufferPtr s22;
           CircularBufferPtr s20;
           double Delta_l_r_dotdot;
-          double s373_psi;
-          double Delta_l_r;
           double s26;
           CircularBufferPtr s23;
-          double s25;
-          CircularBufferPtr s22;
           double velocity_;
           double Delta_l_r_dot;
+          double Ts;
+          double s371_x;
+          double s25;
+          double s372_y;
+          double s373_psi;
+          int32_t s117_tracked_index_tracked_index;
 
         };
         struct Outputs{
@@ -1899,12 +1899,12 @@ typedef CircularBuffer *CircularBufferPtr;
 
 
         // state update
-        double block_328_mem;
+        double block_316_mem;
         int32_t block_313_mem;
+        double block_322_mem;
+        double block_328_mem;
         double block_334_mem;
         double block_336_mem;
-        double block_316_mem;
-        double block_322_mem;
 
 
         // state update
@@ -1914,8 +1914,16 @@ typedef CircularBuffer *CircularBufferPtr;
         // cached output values
         //
 
-        double s361__block_328;
+        double s349__block_316;
         int32_t s346_shared_counter__block_313;
+        int32_t s347__block_314;
+        bool s348__block_315;
+        double s350_x__block_317;
+        double s355__block_322;
+        int32_t s353__block_320;
+        bool s354__block_321;
+        double s356_y__block_323;
+        double s361__block_328;
         int32_t s359__block_326;
         bool s360__block_327;
         double s362_psi__block_329;
@@ -1924,57 +1932,57 @@ typedef CircularBuffer *CircularBufferPtr;
         bool s366__block_333;
         double s368_d__block_335;
         double s369_psi_dot__block_336;
-        double s349__block_316;
-        int32_t s347__block_314;
-        bool s348__block_315;
-        double s350_x__block_317;
-        double s355__block_322;
-        int32_t s353__block_320;
-        bool s354__block_321;
-        double s356_y__block_323;
 
         // API-function resetStates
         void resetStates() { // created by cpp_define_function
 
-          block_328_mem = 0.0;
+          block_316_mem = 0.0;
           block_313_mem = 0;
+          block_322_mem = 0.0;
+          block_328_mem = 0.0;
           block_334_mem = 0.0;
           block_336_mem = 0.0;
-          block_316_mem = 0.0;
-          block_322_mem = 0.0;
         }
         // API-function updateStates
-        void updateStates(double wheelbase, double Ts, double s322_delta_delta, double velocity_) { // created by cpp_define_function
-          double s339;
+        void updateStates(double velocity_, double s322_delta_delta, double wheelbase, double Ts) { // created by cpp_define_function
           double s327;
           bool s328;
           double s329;
           double s330;
           bool s331;
           double s332;
-          double s340;
-          double s341;
-          double s357;
-          double s358;
-          int32_t s344_cnt_increase;
-          int32_t s345;
-          double s363;
-          double s364;
           double s333;
           double s334;
           double s335;
           double s342;
           double s343;
+          int32_t s344_cnt_increase;
+          int32_t s345;
           double s336;
           double s337;
           double s338;
           double s351;
           double s352;
+          double s339;
+          double s340;
+          double s341;
+          double s357;
+          double s358;
+          double s363;
+          double s364;
 
 
-          // restoring the signals s361, s346_shared_counter, s359, s360, s362_psi, s367, s365, s366, s368_d, s369_psi_dot, s349, s347, s348, s350_x, s355, s353, s354, s356_y from the states 
-          double &s361 = s361__block_328;
+          // restoring the signals s349, s346_shared_counter, s347, s348, s350_x, s355, s353, s354, s356_y, s361, s359, s360, s362_psi, s367, s365, s366, s368_d, s369_psi_dot from the states 
+          double &s349 = s349__block_316;
           int32_t &s346_shared_counter = s346_shared_counter__block_313;
+          int32_t &s347 = s347__block_314;
+          bool &s348 = s348__block_315;
+          double &s350_x = s350_x__block_317;
+          double &s355 = s355__block_322;
+          int32_t &s353 = s353__block_320;
+          bool &s354 = s354__block_321;
+          double &s356_y = s356_y__block_323;
+          double &s361 = s361__block_328;
           int32_t &s359 = s359__block_326;
           bool &s360 = s360__block_327;
           double &s362_psi = s362_psi__block_329;
@@ -1983,21 +1991,12 @@ typedef CircularBuffer *CircularBufferPtr;
           bool &s366 = s366__block_333;
           double &s368_d = s368_d__block_335;
           double &s369_psi_dot = s369_psi_dot__block_336;
-          double &s349 = s349__block_316;
-          int32_t &s347 = s347__block_314;
-          bool &s348 = s348__block_315;
-          double &s350_x = s350_x__block_317;
-          double &s355 = s355__block_322;
-          int32_t &s353 = s353__block_320;
-          bool &s354 = s354__block_321;
-          double &s356_y = s356_y__block_323;
 
 
-          // calculating the block outputs in the following order s339, s327, s328, s329, s330, s331, s332, s340, s341, s357, s358, s344_cnt_increase, s345, s363, s364, s333, s334, s335, s342, s343, s336, s337, s338, s351, s352
-          // that depend on Ts, velocity_, wheelbase, s322_delta_delta
+          // calculating the block outputs in the following order s327, s328, s329, s330, s331, s332, s333, s334, s335, s342, s343, s344_cnt_increase, s345, s336, s337, s338, s351, s352, s339, s340, s341, s357, s358, s363, s364
+          // that depend on Ts, velocity_, s322_delta_delta, wheelbase
           // dependencies that require a state update are  
 
-          s339 = velocity_ / wheelbase;
           s327 = -1.5707963267948966;
           s328 = s322_delta_delta < s327;
           if (s328) {
@@ -2012,31 +2011,32 @@ typedef CircularBuffer *CircularBufferPtr;
           } else {
             s332 = s329;
           }
-          s340 = sin(s332);
-          s341 = s339 * s340;
-          s357 = Ts * s341;
-          s358 = s362_psi + s357;
-          s344_cnt_increase = 1;
-          s345 = s346_shared_counter + s344_cnt_increase;
-          s363 = Ts * velocity_;
-          s364 = s368_d + s363;
           s333 = s332 + s362_psi;
           s334 = cos(s333);
           s335 = velocity_ * s334;
           s342 = Ts * s335;
           s343 = s350_x + s342;
+          s344_cnt_increase = 1;
+          s345 = s346_shared_counter + s344_cnt_increase;
           s336 = s332 + s362_psi;
           s337 = sin(s336);
           s338 = velocity_ * s337;
           s351 = Ts * s338;
           s352 = s356_y + s351;
+          s339 = velocity_ / wheelbase;
+          s340 = sin(s332);
+          s341 = s339 * s340;
+          s357 = Ts * s341;
+          s358 = s362_psi + s357;
+          s363 = Ts * velocity_;
+          s364 = s368_d + s363;
 
-          block_328_mem = s358;
+          block_316_mem = s343;
           block_313_mem = s345;
+          block_322_mem = s352;
+          block_328_mem = s358;
           block_334_mem = s364;
           block_336_mem = s341;
-          block_316_mem = s343;
-          block_322_mem = s352;
 
           // calculating the block outputs in the following order 
           // that depend on 
@@ -2045,28 +2045,44 @@ typedef CircularBuffer *CircularBufferPtr;
 
         }
         // API-function calcResults_1 to compute: s368_d, s350_x, s356_y, s362_psi, s369_psi_dot
-        void calcResults_1(double &s368_d, double &s350_x, double &s356_y, double &s362_psi, double &s369_psi_dot, double psi0, double d0, double x0, double y0) { // created by cpp_define_function
-          double s361;
-          int32_t s346_shared_counter;
-          int32_t s359;
-          bool s360;
-          double s367;
-          int32_t s365;
-          bool s366;
+        void calcResults_1(double &s368_d, double &s350_x, double &s356_y, double &s362_psi, double &s369_psi_dot, double x0, double y0, double psi0, double d0) { // created by cpp_define_function
           double s349;
+          int32_t s346_shared_counter;
           int32_t s347;
           bool s348;
           double s355;
           int32_t s353;
           bool s354;
+          double s361;
+          int32_t s359;
+          bool s360;
+          double s367;
+          int32_t s365;
+          bool s366;
 
 
-          // calculating the block outputs in the following order s361, s346_shared_counter, s359, s360, s362_psi, s367, s365, s366, s368_d, s369_psi_dot, s349, s347, s348, s350_x, s355, s353, s354, s356_y
-          // that depend on psi0, d0, x0, y0
-          // dependencies that require a state update are s358, s345, s364, s341, s343, s352 
+          // calculating the block outputs in the following order s349, s346_shared_counter, s347, s348, s350_x, s355, s353, s354, s356_y, s361, s359, s360, s362_psi, s367, s365, s366, s368_d, s369_psi_dot
+          // that depend on x0, y0, psi0, d0
+          // dependencies that require a state update are s343, s345, s352, s358, s364, s341 
 
-          s361 = block_328_mem;
+          s349 = block_316_mem;
           s346_shared_counter = block_313_mem;
+          s347 = 0;
+          s348 = s346_shared_counter == s347;
+          if (s348) {
+            s350_x = x0;
+          } else {
+            s350_x = s349;
+          }
+          s355 = block_322_mem;
+          s353 = 0;
+          s354 = s346_shared_counter == s353;
+          if (s354) {
+            s356_y = y0;
+          } else {
+            s356_y = s355;
+          }
+          s361 = block_328_mem;
           s359 = 0;
           s360 = s346_shared_counter == s359;
           if (s360) {
@@ -2083,26 +2099,18 @@ typedef CircularBuffer *CircularBufferPtr;
             s368_d = s367;
           }
           s369_psi_dot = block_336_mem;
-          s349 = block_316_mem;
-          s347 = 0;
-          s348 = s346_shared_counter == s347;
-          if (s348) {
-            s350_x = x0;
-          } else {
-            s350_x = s349;
-          }
-          s355 = block_322_mem;
-          s353 = 0;
-          s354 = s346_shared_counter == s353;
-          if (s354) {
-            s356_y = y0;
-          } else {
-            s356_y = s355;
-          }
 
-          // saving the signals s361, s346_shared_counter, s359, s360, s362_psi, s367, s365, s366, s368_d, s369_psi_dot, s349, s347, s348, s350_x, s355, s353, s354, s356_y into the states 
-          s361__block_328 = s361;
+          // saving the signals s349, s346_shared_counter, s347, s348, s350_x, s355, s353, s354, s356_y, s361, s359, s360, s362_psi, s367, s365, s366, s368_d, s369_psi_dot into the states 
+          s349__block_316 = s349;
           s346_shared_counter__block_313 = s346_shared_counter;
+          s347__block_314 = s347;
+          s348__block_315 = s348;
+          s350_x__block_317 = s350_x;
+          s355__block_322 = s355;
+          s353__block_320 = s353;
+          s354__block_321 = s354;
+          s356_y__block_323 = s356_y;
+          s361__block_328 = s361;
           s359__block_326 = s359;
           s360__block_327 = s360;
           s362_psi__block_329 = s362_psi;
@@ -2111,25 +2119,17 @@ typedef CircularBuffer *CircularBufferPtr;
           s366__block_333 = s366;
           s368_d__block_335 = s368_d;
           s369_psi_dot__block_336 = s369_psi_dot;
-          s349__block_316 = s349;
-          s347__block_314 = s347;
-          s348__block_315 = s348;
-          s350_x__block_317 = s350_x;
-          s355__block_322 = s355;
-          s353__block_320 = s353;
-          s354__block_321 = s354;
-          s356_y__block_323 = s356_y;
         }
         // all system inputs and outputs combined
         struct Inputs{
-          double s322_delta_delta;
-          double Ts;
-          double psi0;
+          double x0;
           double wheelbase;
-          double y0;
           double d0;
           double velocity_;
-          double x0;
+          double s322_delta_delta;
+          double y0;
+          double psi0;
+          double Ts;
 
         };
         struct Outputs{
@@ -2165,24 +2165,24 @@ typedef CircularBuffer *CircularBufferPtr;
       // cached output values
       //
 
-      double s370_d__block_337;
+      double s374_psi_dot__block_337;
       double s371_x__block_337;
       double s372_y__block_337;
       int32_t s117_tracked_index_tracked_index__block_98;
-      double s373_psi__block_337;
-      double s26__block_13;
-      double s25__block_12;
-      double s322_delta_delta__block_289;
-      double s313_delta_dot__block_289;
       int32_t s323__block_290;
       int32_t s324_read_position_read_position__block_291;
-      bool s120_output_valid_output_valid_output_valid__block_98;
       int32_t s325__block_292;
       int32_t s326_minimal_read_position_minimal_read_position__block_293;
-      double s374_psi_dot__block_337;
-      bool s121_need_more_path_input_data_need_more_path_input_data__block_98;
+      double s26__block_13;
+      double s25__block_12;
+      double s373_psi__block_337;
       double s317_d_star__block_289;
+      double s322_delta_delta__block_289;
       double s375_psi_r__block_338;
+      bool s120_output_valid_output_valid_output_valid__block_98;
+      bool s121_need_more_path_input_data_need_more_path_input_data__block_98;
+      double s370_d__block_337;
+      double s313_delta_dot__block_289;
       double s376__block_339;
       double s377_K__block_340;
 
@@ -2198,7 +2198,7 @@ typedef CircularBuffer *CircularBufferPtr;
         block_12_mem = 0.0;
       }
       // API-function updateStates
-      void updateStates(CircularBufferPtr s21, double Ts, CircularBufferPtr s20, double wheelbase, CircularBufferPtr s22, double velocity_) { // created by cpp_define_function
+      void updateStates(CircularBufferPtr s21, double wheelbase, CircularBufferPtr s20, double velocity_, double Ts, CircularBufferPtr s22) { // created by cpp_define_function
         int32_t s27;
         int32_t s28;
         int32_t s29;
@@ -2206,31 +2206,31 @@ typedef CircularBuffer *CircularBufferPtr;
         bool s32;
 
 
-        // restoring the signals s370_d, s371_x, s372_y, s117_tracked_index_tracked_index, s373_psi, s26, s25, s322_delta_delta, s313_delta_dot, s323, s324_read_position_read_position, s120_output_valid_output_valid_output_valid, s325, s326_minimal_read_position_minimal_read_position, s374_psi_dot, s121_need_more_path_input_data_need_more_path_input_data, s317_d_star, s375_psi_r, s376, s377_K from the states 
-        double &s370_d = s370_d__block_337;
+        // restoring the signals s374_psi_dot, s371_x, s372_y, s117_tracked_index_tracked_index, s323, s324_read_position_read_position, s325, s326_minimal_read_position_minimal_read_position, s26, s25, s373_psi, s317_d_star, s322_delta_delta, s375_psi_r, s120_output_valid_output_valid_output_valid, s121_need_more_path_input_data_need_more_path_input_data, s370_d, s313_delta_dot, s376, s377_K from the states 
+        double &s374_psi_dot = s374_psi_dot__block_337;
         double &s371_x = s371_x__block_337;
         double &s372_y = s372_y__block_337;
         int32_t &s117_tracked_index_tracked_index = s117_tracked_index_tracked_index__block_98;
-        double &s373_psi = s373_psi__block_337;
-        double &s26 = s26__block_13;
-        double &s25 = s25__block_12;
-        double &s322_delta_delta = s322_delta_delta__block_289;
-        double &s313_delta_dot = s313_delta_dot__block_289;
         int32_t &s323 = s323__block_290;
         int32_t &s324_read_position_read_position = s324_read_position_read_position__block_291;
-        bool &s120_output_valid_output_valid_output_valid = s120_output_valid_output_valid_output_valid__block_98;
         int32_t &s325 = s325__block_292;
         int32_t &s326_minimal_read_position_minimal_read_position = s326_minimal_read_position_minimal_read_position__block_293;
-        double &s374_psi_dot = s374_psi_dot__block_337;
-        bool &s121_need_more_path_input_data_need_more_path_input_data = s121_need_more_path_input_data_need_more_path_input_data__block_98;
+        double &s26 = s26__block_13;
+        double &s25 = s25__block_12;
+        double &s373_psi = s373_psi__block_337;
         double &s317_d_star = s317_d_star__block_289;
+        double &s322_delta_delta = s322_delta_delta__block_289;
         double &s375_psi_r = s375_psi_r__block_338;
+        bool &s120_output_valid_output_valid_output_valid = s120_output_valid_output_valid_output_valid__block_98;
+        bool &s121_need_more_path_input_data_need_more_path_input_data = s121_need_more_path_input_data_need_more_path_input_data__block_98;
+        double &s370_d = s370_d__block_337;
+        double &s313_delta_dot = s313_delta_dot__block_289;
         double &s376 = s376__block_339;
         double &s377_K = s377_K__block_340;
 
 
         // calculating the block outputs in the following order s27, s28, s29, s31, s32
-        // that depend on Ts, wheelbase, velocity_, s21, s20, s22
+        // that depend on wheelbase, velocity_, Ts, s21, s20, s22
         // dependencies that require a state update are  
 
         { // calling the custom c++ function s20->get_current_absolute_write_index
@@ -2245,13 +2245,13 @@ typedef CircularBuffer *CircularBufferPtr;
 
         if (s120_output_valid_output_valid_output_valid == 1) {
           { // subsystem Sys1005_simulation_model
-            block_337_subsystem_Sys1005_simulation_model.updateStates(wheelbase, Ts, s322_delta_delta, velocity_);
+            block_337_subsystem_Sys1005_simulation_model.updateStates(velocity_, s322_delta_delta, wheelbase, Ts);
           }
 
         }
         if (s32 == 1) {
           { // subsystem Sys1002_tracker
-            block_98_subsystem_Sys1002_tracker.updateStates(s21, s371_x, s372_y, s20, s22);
+            block_98_subsystem_Sys1002_tracker.updateStates(s21, s371_x, s20, s22, s372_y);
           }
 
         }
@@ -2270,17 +2270,17 @@ typedef CircularBuffer *CircularBufferPtr;
 
       }
       // API-function calcResults_1 to compute: s370_d, s371_x, s372_y, s373_psi, s374_psi_dot, s375_psi_r, s377_K, s322_delta_delta, s313_delta_dot, s317_d_star, s117_tracked_index_tracked_index, s120_output_valid_output_valid_output_valid, s121_need_more_path_input_data_need_more_path_input_data, s324_read_position_read_position, s326_minimal_read_position_minimal_read_position
-      void calcResults_1(double &s370_d, double &s371_x, double &s372_y, double &s373_psi, double &s374_psi_dot, double &s375_psi_r, double &s377_K, double &s322_delta_delta, double &s313_delta_dot, double &s317_d_star, int32_t &s117_tracked_index_tracked_index, bool &s120_output_valid_output_valid_output_valid, bool &s121_need_more_path_input_data_need_more_path_input_data, int32_t &s324_read_position_read_position, int32_t &s326_minimal_read_position_minimal_read_position, double psi0, double x0, double y0, double d0, CircularBufferPtr s21, CircularBufferPtr s20, CircularBufferPtr s22, CircularBufferPtr s24, double Delta_l_r_dotdot, double Delta_l_r, CircularBufferPtr s23, double velocity_, double Delta_l_r_dot) { // created by cpp_define_function
-        double s26;
-        double s25;
+      void calcResults_1(double &s370_d, double &s371_x, double &s372_y, double &s373_psi, double &s374_psi_dot, double &s375_psi_r, double &s377_K, double &s322_delta_delta, double &s313_delta_dot, double &s317_d_star, int32_t &s117_tracked_index_tracked_index, bool &s120_output_valid_output_valid_output_valid, bool &s121_need_more_path_input_data_need_more_path_input_data, int32_t &s324_read_position_read_position, int32_t &s326_minimal_read_position_minimal_read_position, double d0, double x0, double y0, double psi0, CircularBufferPtr s21, CircularBufferPtr s20, CircularBufferPtr s22, double Delta_l_r, CircularBufferPtr s24, double Delta_l_r_dotdot, CircularBufferPtr s23, double velocity_, double Delta_l_r_dot) { // created by cpp_define_function
         int32_t s323;
         int32_t s325;
+        double s26;
+        double s25;
         double s376;
 
 
-        // calculating the block outputs in the following order s370_d, s371_x, s372_y, s117_tracked_index_tracked_index, s373_psi, s26, s25, s322_delta_delta, s313_delta_dot, s323, s324_read_position_read_position, s120_output_valid_output_valid_output_valid, s325, s326_minimal_read_position_minimal_read_position, s374_psi_dot, s121_need_more_path_input_data_need_more_path_input_data, s317_d_star, s375_psi_r, s376, s377_K
-        // that depend on psi0, x0, y0, d0, s21, s20, s22, s24, Delta_l_r_dotdot, Delta_l_r, s23, velocity_, Delta_l_r_dot
-        // dependencies that require a state update are s322_delta_delta, Ts, s120_output_valid_output_valid_output_valid, wheelbase, velocity_, s21, s371_x, s372_y, s20, s32, s22, s374_psi_dot 
+        // calculating the block outputs in the following order s374_psi_dot, s371_x, s372_y, s117_tracked_index_tracked_index, s323, s324_read_position_read_position, s325, s326_minimal_read_position_minimal_read_position, s26, s25, s373_psi, s317_d_star, s322_delta_delta, s375_psi_r, s120_output_valid_output_valid_output_valid, s121_need_more_path_input_data_need_more_path_input_data, s370_d, s313_delta_dot, s376, s377_K
+        // that depend on d0, x0, y0, psi0, s21, s20, s22, Delta_l_r, s24, Delta_l_r_dotdot, s23, velocity_, Delta_l_r_dot
+        // dependencies that require a state update are wheelbase, s120_output_valid_output_valid_output_valid, velocity_, s322_delta_delta, Ts, s21, s371_x, s20, s32, s22, s372_y 
 
         { // subsystem Sys1005_simulation_model
           double _s368_d;
@@ -2288,12 +2288,12 @@ typedef CircularBuffer *CircularBufferPtr;
           double _s356_y;
           double _s362_psi;
           double _s369_psi_dot;
-          block_337_subsystem_Sys1005_simulation_model.calcResults_1(_s368_d, _s350_x, _s356_y, _s362_psi, _s369_psi_dot, psi0, d0, x0, y0);
-          s370_d = _s368_d;
+          block_337_subsystem_Sys1005_simulation_model.calcResults_1(_s368_d, _s350_x, _s356_y, _s362_psi, _s369_psi_dot, x0, y0, psi0, d0);
+          s374_psi_dot = _s369_psi_dot;
           s371_x = _s350_x;
           s372_y = _s356_y;
           s373_psi = _s362_psi;
-          s374_psi_dot = _s369_psi_dot;
+          s370_d = _s368_d;
         }
         { // subsystem Sys1002_tracker
           int32_t _s113_optimal_index_tracked_index;
@@ -2306,6 +2306,10 @@ typedef CircularBuffer *CircularBufferPtr;
           s120_output_valid_output_valid_output_valid = _s98_reached_minimum_minimal_distance_reached;
           s121_need_more_path_input_data_need_more_path_input_data = _s99_reached_the_end_of_currently_available_path_data_reached_the_end_of_currently_available_path_data;
         }
+        s323 = 1;
+        s324_read_position_read_position = s117_tracked_index_tracked_index + s323;
+        s325 = 100;
+        s326_minimal_read_position_minimal_read_position = s324_read_position_read_position - s325;
         s26 = 0;
         s25 = block_12_mem;
         { // subsystem Sys1004_controller
@@ -2320,58 +2324,54 @@ typedef CircularBuffer *CircularBufferPtr;
           double _s185_Delta_l;
           double _s282_Delta_u;
           double _s301_delta;
-          block_289_subsystem_Sys1004_controller.calcResults_1(_s309_Delta_u_dot, _s311_delta_dot, _s210_x_r, _s213_y_r, _s251_v_star, _s207_d_star, _s262_psi_r, _s253_psi_r_dot, _s185_Delta_l, _s282_Delta_u, _s301_delta, s117_tracked_index_tracked_index, s371_x, s21, s372_y, s22, s23, velocity_, Delta_l_r_dot, Delta_l_r, s24, s25, Delta_l_r_dotdot, s26, s373_psi, s20);
+          block_289_subsystem_Sys1004_controller.calcResults_1(_s309_Delta_u_dot, _s311_delta_dot, _s210_x_r, _s213_y_r, _s251_v_star, _s207_d_star, _s262_psi_r, _s253_psi_r_dot, _s185_Delta_l, _s282_Delta_u, _s301_delta, s117_tracked_index_tracked_index, s371_x, s21, s372_y, s22, s23, s373_psi, Delta_l_r_dot, Delta_l_r, velocity_, Delta_l_r_dotdot, s26, s20, s24, s25);
+          s317_d_star = _s207_d_star;
           s322_delta_delta = _s301_delta;
           s313_delta_dot = _s311_delta_dot;
-          s317_d_star = _s207_d_star;
         }
-        s323 = 1;
-        s324_read_position_read_position = s117_tracked_index_tracked_index + s323;
-        s325 = 100;
-        s326_minimal_read_position_minimal_read_position = s324_read_position_read_position - s325;
         s375_psi_r = s373_psi + s322_delta_delta;
         s376 = s374_psi_dot + s313_delta_dot;
         s377_K = s376 / velocity_;
 
-        // saving the signals s370_d, s371_x, s372_y, s117_tracked_index_tracked_index, s373_psi, s26, s25, s322_delta_delta, s313_delta_dot, s323, s324_read_position_read_position, s120_output_valid_output_valid_output_valid, s325, s326_minimal_read_position_minimal_read_position, s374_psi_dot, s121_need_more_path_input_data_need_more_path_input_data, s317_d_star, s375_psi_r, s376, s377_K into the states 
-        s370_d__block_337 = s370_d;
+        // saving the signals s374_psi_dot, s371_x, s372_y, s117_tracked_index_tracked_index, s323, s324_read_position_read_position, s325, s326_minimal_read_position_minimal_read_position, s26, s25, s373_psi, s317_d_star, s322_delta_delta, s375_psi_r, s120_output_valid_output_valid_output_valid, s121_need_more_path_input_data_need_more_path_input_data, s370_d, s313_delta_dot, s376, s377_K into the states 
+        s374_psi_dot__block_337 = s374_psi_dot;
         s371_x__block_337 = s371_x;
         s372_y__block_337 = s372_y;
         s117_tracked_index_tracked_index__block_98 = s117_tracked_index_tracked_index;
-        s373_psi__block_337 = s373_psi;
-        s26__block_13 = s26;
-        s25__block_12 = s25;
-        s322_delta_delta__block_289 = s322_delta_delta;
-        s313_delta_dot__block_289 = s313_delta_dot;
         s323__block_290 = s323;
         s324_read_position_read_position__block_291 = s324_read_position_read_position;
-        s120_output_valid_output_valid_output_valid__block_98 = s120_output_valid_output_valid_output_valid;
         s325__block_292 = s325;
         s326_minimal_read_position_minimal_read_position__block_293 = s326_minimal_read_position_minimal_read_position;
-        s374_psi_dot__block_337 = s374_psi_dot;
-        s121_need_more_path_input_data_need_more_path_input_data__block_98 = s121_need_more_path_input_data_need_more_path_input_data;
+        s26__block_13 = s26;
+        s25__block_12 = s25;
+        s373_psi__block_337 = s373_psi;
         s317_d_star__block_289 = s317_d_star;
+        s322_delta_delta__block_289 = s322_delta_delta;
         s375_psi_r__block_338 = s375_psi_r;
+        s120_output_valid_output_valid_output_valid__block_98 = s120_output_valid_output_valid_output_valid;
+        s121_need_more_path_input_data_need_more_path_input_data__block_98 = s121_need_more_path_input_data_need_more_path_input_data;
+        s370_d__block_337 = s370_d;
+        s313_delta_dot__block_289 = s313_delta_dot;
         s376__block_339 = s376;
         s377_K__block_340 = s377_K;
       }
       // all system inputs and outputs combined
       struct Inputs{
         CircularBufferPtr s21;
-        double Ts;
-        CircularBufferPtr s24;
-        CircularBufferPtr s20;
-        double Delta_l_r_dotdot;
-        double Delta_l_r;
-        double psi0;
-        double wheelbase;
-        double y0;
-        CircularBufferPtr s23;
-        double d0;
-        CircularBufferPtr s22;
-        double velocity_;
-        double Delta_l_r_dot;
         double x0;
+        double Delta_l_r;
+        CircularBufferPtr s24;
+        double wheelbase;
+        CircularBufferPtr s20;
+        double d0;
+        double Delta_l_r_dotdot;
+        CircularBufferPtr s23;
+        double velocity_;
+        double y0;
+        double psi0;
+        double Delta_l_r_dot;
+        double Ts;
+        CircularBufferPtr s22;
 
       };
       struct Outputs{
@@ -2431,21 +2431,29 @@ typedef CircularBuffer *CircularBufferPtr;
     CircularBufferPtr s20__block_1;
     CircularBufferPtr s23__block_4;
     CircularBufferPtr s22__block_3;
+    double path_d__block_341;
+    int32_t read_position__block_341;
     double path_psi__block_341;
-    int32_t tracked_index__block_341;
+    double vehicle_psi__block_341;
+    double path_y__block_341;
+    int32_t s398__block_347;
+    int32_t s399__block_348;
+    int32_t head_index__block_349;
+    double distance_at_the_end_of_horizon__block_350;
     double s394__block_343;
     bool output_valid__block_341;
     int32_t s393__block_342;
     double s387__block_341;
     double path_d_star__block_344;
-    double path_K__block_341;
+    double distance_ahead__block_351;
     double vehicle_delta__block_341;
-    double vehicle_psi_dot__block_341;
+    bool need_more_path_input_data__block_341;
     double vehicle_delta_dot__block_341;
+    double path_K__block_341;
+    int32_t tracked_index__block_341;
+    double path_x__block_341;
+    double vehicle_psi_dot__block_341;
     int32_t s406__block_355;
-    int32_t s398__block_347;
-    int32_t s399__block_348;
-    int32_t head_index__block_349;
     int32_t s396__block_345;
     int32_t s392__block_341;
     int32_t s397_minimal_read_position__block_346;
@@ -2455,14 +2463,6 @@ typedef CircularBuffer *CircularBufferPtr;
     int32_t elements_free_to_write__block_356;
     double s408__block_357;
     double velocity__block_358;
-    bool need_more_path_input_data__block_341;
-    double distance_at_the_end_of_horizon__block_350;
-    int32_t read_position__block_341;
-    double path_y__block_341;
-    double path_x__block_341;
-    double vehicle_psi__block_341;
-    double path_d__block_341;
-    double distance_ahead__block_351;
 
     // API-function resetStates
     void resetStates() { // created by cpp_define_function
@@ -2498,30 +2498,38 @@ typedef CircularBuffer *CircularBufferPtr;
       return outputs;
     }
     // API-function updateStates
-    void updateStates(double Ts, double psi_sample, double x_sample, bool input_sample_valid, double wheelbase, double K_sample, double y_sample, double d_sample, double velocity_, bool async_input_data_valid) { // created by cpp_define_function
+    void updateStates(double psi_sample, double x_sample, double wheelbase, bool input_sample_valid, double Ts, double velocity_, double K_sample, double y_sample, double d_sample, bool async_input_data_valid) { // created by cpp_define_function
 
 
-      // restoring the signals s21, s24, s20, s23, s22, path_psi, tracked_index, s394, output_valid, s393, s387, path_d_star, path_K, vehicle_delta, vehicle_psi_dot, vehicle_delta_dot, s406, s398, s399, head_index, s396, s392, s397_minimal_read_position, s403, s404, s405, elements_free_to_write, s408, velocity, need_more_path_input_data, distance_at_the_end_of_horizon, read_position, path_y, path_x, vehicle_psi, path_d, distance_ahead from the states 
+      // restoring the signals s21, s24, s20, s23, s22, path_d, read_position, path_psi, vehicle_psi, path_y, s398, s399, head_index, distance_at_the_end_of_horizon, s394, output_valid, s393, s387, path_d_star, distance_ahead, vehicle_delta, need_more_path_input_data, vehicle_delta_dot, path_K, tracked_index, path_x, vehicle_psi_dot, s406, s396, s392, s397_minimal_read_position, s403, s404, s405, elements_free_to_write, s408, velocity from the states 
       CircularBufferPtr &s21 = s21__block_2;
       CircularBufferPtr &s24 = s24__block_5;
       CircularBufferPtr &s20 = s20__block_1;
       CircularBufferPtr &s23 = s23__block_4;
       CircularBufferPtr &s22 = s22__block_3;
+      double &path_d = path_d__block_341;
+      int32_t &read_position = read_position__block_341;
       double &path_psi = path_psi__block_341;
-      int32_t &tracked_index = tracked_index__block_341;
+      double &vehicle_psi = vehicle_psi__block_341;
+      double &path_y = path_y__block_341;
+      int32_t &s398 = s398__block_347;
+      int32_t &s399 = s399__block_348;
+      int32_t &head_index = head_index__block_349;
+      double &distance_at_the_end_of_horizon = distance_at_the_end_of_horizon__block_350;
       double &s394 = s394__block_343;
       bool &output_valid = output_valid__block_341;
       int32_t &s393 = s393__block_342;
       double &s387 = s387__block_341;
       double &path_d_star = path_d_star__block_344;
-      double &path_K = path_K__block_341;
+      double &distance_ahead = distance_ahead__block_351;
       double &vehicle_delta = vehicle_delta__block_341;
-      double &vehicle_psi_dot = vehicle_psi_dot__block_341;
+      bool &need_more_path_input_data = need_more_path_input_data__block_341;
       double &vehicle_delta_dot = vehicle_delta_dot__block_341;
+      double &path_K = path_K__block_341;
+      int32_t &tracked_index = tracked_index__block_341;
+      double &path_x = path_x__block_341;
+      double &vehicle_psi_dot = vehicle_psi_dot__block_341;
       int32_t &s406 = s406__block_355;
-      int32_t &s398 = s398__block_347;
-      int32_t &s399 = s399__block_348;
-      int32_t &head_index = head_index__block_349;
       int32_t &s396 = s396__block_345;
       int32_t &s392 = s392__block_341;
       int32_t &s397_minimal_read_position = s397_minimal_read_position__block_346;
@@ -2531,30 +2539,22 @@ typedef CircularBuffer *CircularBufferPtr;
       int32_t &elements_free_to_write = elements_free_to_write__block_356;
       double &s408 = s408__block_357;
       double &velocity = velocity__block_358;
-      bool &need_more_path_input_data = need_more_path_input_data__block_341;
-      double &distance_at_the_end_of_horizon = distance_at_the_end_of_horizon__block_350;
-      int32_t &read_position = read_position__block_341;
-      double &path_y = path_y__block_341;
-      double &path_x = path_x__block_341;
-      double &vehicle_psi = vehicle_psi__block_341;
-      double &path_d = path_d__block_341;
-      double &distance_ahead = distance_ahead__block_351;
 
 
       // calculating the block outputs in the following order 
-      // that depend on psi_sample, x_sample, K_sample, y_sample, d_sample, async_input_data_valid, Ts, input_sample_valid, wheelbase, velocity_
+      // that depend on psi_sample, x_sample, K_sample, y_sample, d_sample, async_input_data_valid, wheelbase, input_sample_valid, velocity_, Ts
       // dependencies that require a state update are  
 
 
       if (async_input_data_valid == 1) {
         { // subsystem Sys1000_store_input_data
-          block_11_subsystem_Sys1000_store_input_data.updateStates(s21, s24, psi_sample, x_sample, s20, s23, K_sample, y_sample, d_sample, s22);
+          block_11_subsystem_Sys1000_store_input_data.updateStates(s21, psi_sample, s24, x_sample, s20, s23, K_sample, y_sample, d_sample, s22);
         }
 
       }
       if (input_sample_valid == 1) {
         { // subsystem Sys1001_process_data
-          block_341_subsystem_Sys1001_process_data.updateStates(s21, Ts, s20, wheelbase, s22, velocity_);
+          block_341_subsystem_Sys1001_process_data.updateStates(s21, wheelbase, s20, velocity_, Ts, s22);
         }
 
       }
@@ -2574,15 +2574,15 @@ typedef CircularBuffer *CircularBufferPtr;
     };
     // input signals of updateStates
     struct Inputs_updateStates{
-      double Ts;
       double psi_sample;
       double x_sample;
-      bool input_sample_valid;
       double wheelbase;
+      bool input_sample_valid;
+      double Ts;
+      double velocity_;
       double K_sample;
       double y_sample;
       double d_sample;
-      double velocity_;
       bool async_input_data_valid;
 
     };
@@ -2590,23 +2590,23 @@ typedef CircularBuffer *CircularBufferPtr;
     Outputs_updateStates updateStates__(Inputs_updateStates inputs) {
       Outputs_updateStates outputs;
 
-      updateStates(inputs.Ts, inputs.psi_sample, inputs.x_sample, inputs.input_sample_valid, inputs.wheelbase, inputs.K_sample, inputs.y_sample, inputs.d_sample, inputs.velocity_, inputs.async_input_data_valid);
+      updateStates(inputs.psi_sample, inputs.x_sample, inputs.wheelbase, inputs.input_sample_valid, inputs.Ts, inputs.velocity_, inputs.K_sample, inputs.y_sample, inputs.d_sample, inputs.async_input_data_valid);
 
       return outputs;
     }
     // API-function calcResults_1 to compute: output_valid, need_more_path_input_data, distance_at_the_end_of_horizon, distance_ahead, head_index, read_position, elements_free_to_write, tracked_index, path_d_star, path_d, path_x, path_y, path_psi, path_K, vehicle_delta, vehicle_delta_dot, vehicle_psi, vehicle_psi_dot, velocity
-    void calcResults_1(bool &output_valid, bool &need_more_path_input_data, double &distance_at_the_end_of_horizon, double &distance_ahead, int32_t &head_index, int32_t &read_position, int32_t &elements_free_to_write, int32_t &tracked_index, double &path_d_star, double &path_d, double &path_x, double &path_y, double &path_psi, double &path_K, double &vehicle_delta, double &vehicle_delta_dot, double &vehicle_psi, double &vehicle_psi_dot, double &velocity, double Delta_l_r_dotdot, bool input_sample_valid, double Delta_l_r, double psi0, double y0, double d0, double velocity_, double Delta_l_r_dot, double x0) { // created by cpp_define_function
+    void calcResults_1(bool &output_valid, bool &need_more_path_input_data, double &distance_at_the_end_of_horizon, double &distance_ahead, int32_t &head_index, int32_t &read_position, int32_t &elements_free_to_write, int32_t &tracked_index, double &path_d_star, double &path_d, double &path_x, double &path_y, double &path_psi, double &path_K, double &vehicle_delta, double &vehicle_delta_dot, double &vehicle_psi, double &vehicle_psi_dot, double &velocity, double x0, double Delta_l_r, bool input_sample_valid, double d0, double Delta_l_r_dotdot, double velocity_, double y0, double psi0, double Delta_l_r_dot) { // created by cpp_define_function
       CircularBufferPtr s21;
       CircularBufferPtr s24;
       CircularBufferPtr s20;
       CircularBufferPtr s23;
       CircularBufferPtr s22;
+      int32_t s398;
+      int32_t s399;
       double s394;
       int32_t s393;
       double s387;
       int32_t s406;
-      int32_t s398;
-      int32_t s399;
       int32_t s396;
       int32_t s392;
       int32_t s397_minimal_read_position;
@@ -2616,9 +2616,9 @@ typedef CircularBuffer *CircularBufferPtr;
       double s408;
 
 
-      // calculating the block outputs in the following order s21, s24, s20, s23, s22, path_psi, tracked_index, s394, output_valid, s393, s387, path_d_star, path_K, vehicle_delta, vehicle_psi_dot, vehicle_delta_dot, s406, s398, s399, head_index, s396, s392, s397_minimal_read_position, s403, s404, s405, elements_free_to_write, s408, velocity, need_more_path_input_data, distance_at_the_end_of_horizon, read_position, path_y, path_x, vehicle_psi, path_d, distance_ahead
-      // that depend on Delta_l_r_dotdot, input_sample_valid, Delta_l_r, psi0, y0, d0, velocity_, Delta_l_r_dot, x0
-      // dependencies that require a state update are s21, s24, psi_sample, x_sample, s20, s23, K_sample, y_sample, d_sample, s22, async_input_data_valid, Ts, input_sample_valid, wheelbase, velocity_, path_d_star, s397_minimal_read_position 
+      // calculating the block outputs in the following order s21, s24, s20, s23, s22, path_d, read_position, path_psi, vehicle_psi, path_y, s398, s399, head_index, distance_at_the_end_of_horizon, s394, output_valid, s393, s387, path_d_star, distance_ahead, vehicle_delta, need_more_path_input_data, vehicle_delta_dot, path_K, tracked_index, path_x, vehicle_psi_dot, s406, s396, s392, s397_minimal_read_position, s403, s404, s405, elements_free_to_write, s408, velocity
+      // that depend on x0, Delta_l_r, input_sample_valid, d0, Delta_l_r_dotdot, velocity_, y0, psi0, Delta_l_r_dot
+      // dependencies that require a state update are s21, psi_sample, s24, x_sample, s20, s23, K_sample, y_sample, d_sample, s22, async_input_data_valid, wheelbase, input_sample_valid, velocity_, Ts, path_d_star, s397_minimal_read_position 
 
       s21 = block_2_ptr;
       s24 = block_5_ptr;
@@ -2642,24 +2642,36 @@ typedef CircularBuffer *CircularBufferPtr;
           bool _s121_need_more_path_input_data_need_more_path_input_data;
           int32_t _s324_read_position_read_position;
           int32_t _s326_minimal_read_position_minimal_read_position;
-          block_341_subsystem_Sys1001_process_data.calcResults_1(_s370_d, _s371_x, _s372_y, _s373_psi, _s374_psi_dot, _s375_psi_r, _s377_K, _s322_delta_delta, _s313_delta_dot, _s317_d_star, _s117_tracked_index_tracked_index, _s120_output_valid_output_valid_output_valid, _s121_need_more_path_input_data_need_more_path_input_data, _s324_read_position_read_position, _s326_minimal_read_position_minimal_read_position, psi0, x0, y0, d0, s21, s20, s22, s24, Delta_l_r_dotdot, Delta_l_r, s23, velocity_, Delta_l_r_dot);
+          block_341_subsystem_Sys1001_process_data.calcResults_1(_s370_d, _s371_x, _s372_y, _s373_psi, _s374_psi_dot, _s375_psi_r, _s377_K, _s322_delta_delta, _s313_delta_dot, _s317_d_star, _s117_tracked_index_tracked_index, _s120_output_valid_output_valid_output_valid, _s121_need_more_path_input_data_need_more_path_input_data, _s324_read_position_read_position, _s326_minimal_read_position_minimal_read_position, d0, x0, y0, psi0, s21, s20, s22, Delta_l_r, s24, Delta_l_r_dotdot, s23, velocity_, Delta_l_r_dot);
+          path_d = _s370_d;
+          read_position = _s324_read_position_read_position;
           path_psi = _s375_psi_r;
-          tracked_index = _s117_tracked_index_tracked_index;
+          vehicle_psi = _s373_psi;
+          path_y = _s372_y;
           output_valid = _s120_output_valid_output_valid_output_valid;
           s387 = _s317_d_star;
-          path_K = _s377_K;
           vehicle_delta = _s322_delta_delta;
-          vehicle_psi_dot = _s374_psi_dot;
-          vehicle_delta_dot = _s313_delta_dot;
-          s392 = _s326_minimal_read_position_minimal_read_position;
           need_more_path_input_data = _s121_need_more_path_input_data_need_more_path_input_data;
-          read_position = _s324_read_position_read_position;
-          path_y = _s372_y;
+          vehicle_delta_dot = _s313_delta_dot;
+          path_K = _s377_K;
+          tracked_index = _s117_tracked_index_tracked_index;
           path_x = _s371_x;
-          vehicle_psi = _s373_psi;
-          path_d = _s370_d;
+          vehicle_psi_dot = _s374_psi_dot;
+          s392 = _s326_minimal_read_position_minimal_read_position;
         }
 
+      }
+      { // calling the custom c++ function s20->get_current_absolute_write_index
+        int32_t block_347_out0;
+        s20->get_current_absolute_write_index(block_347_out0);
+        s398 = block_347_out0;
+      }
+      s399 = 1;
+      head_index = s398 - s399;
+      { // calling the custom c++ function s20->read_from_absolute_index
+        double block_350_out0;
+        s20->read_from_absolute_index(block_350_out0, head_index);
+        distance_at_the_end_of_horizon = block_350_out0;
       }
       s394 = block_343_mem;
       s393 = input_sample_valid  &&  output_valid;
@@ -2668,14 +2680,8 @@ typedef CircularBuffer *CircularBufferPtr;
       } else {
         path_d_star = s394;
       }
+      distance_ahead = distance_at_the_end_of_horizon - path_d_star;
       s406 = 10000;
-      { // calling the custom c++ function s20->get_current_absolute_write_index
-        int32_t block_347_out0;
-        s20->get_current_absolute_write_index(block_347_out0);
-        s398 = block_347_out0;
-      }
-      s399 = 1;
-      head_index = s398 - s399;
       s396 = block_345_mem;
       if (s393) {
         s397_minimal_read_position = s392;
@@ -2688,34 +2694,36 @@ typedef CircularBuffer *CircularBufferPtr;
       elements_free_to_write = s406 - s405;
       s408 = 1.0;
       velocity = velocity_ * s408;
-      { // calling the custom c++ function s20->read_from_absolute_index
-        double block_350_out0;
-        s20->read_from_absolute_index(block_350_out0, head_index);
-        distance_at_the_end_of_horizon = block_350_out0;
-      }
-      distance_ahead = distance_at_the_end_of_horizon - path_d_star;
 
-      // saving the signals s21, s24, s20, s23, s22, path_psi, tracked_index, s394, output_valid, s393, s387, path_d_star, path_K, vehicle_delta, vehicle_psi_dot, vehicle_delta_dot, s406, s398, s399, head_index, s396, s392, s397_minimal_read_position, s403, s404, s405, elements_free_to_write, s408, velocity, need_more_path_input_data, distance_at_the_end_of_horizon, read_position, path_y, path_x, vehicle_psi, path_d, distance_ahead into the states 
+      // saving the signals s21, s24, s20, s23, s22, path_d, read_position, path_psi, vehicle_psi, path_y, s398, s399, head_index, distance_at_the_end_of_horizon, s394, output_valid, s393, s387, path_d_star, distance_ahead, vehicle_delta, need_more_path_input_data, vehicle_delta_dot, path_K, tracked_index, path_x, vehicle_psi_dot, s406, s396, s392, s397_minimal_read_position, s403, s404, s405, elements_free_to_write, s408, velocity into the states 
       s21__block_2 = s21;
       s24__block_5 = s24;
       s20__block_1 = s20;
       s23__block_4 = s23;
       s22__block_3 = s22;
+      path_d__block_341 = path_d;
+      read_position__block_341 = read_position;
       path_psi__block_341 = path_psi;
-      tracked_index__block_341 = tracked_index;
+      vehicle_psi__block_341 = vehicle_psi;
+      path_y__block_341 = path_y;
+      s398__block_347 = s398;
+      s399__block_348 = s399;
+      head_index__block_349 = head_index;
+      distance_at_the_end_of_horizon__block_350 = distance_at_the_end_of_horizon;
       s394__block_343 = s394;
       output_valid__block_341 = output_valid;
       s393__block_342 = s393;
       s387__block_341 = s387;
       path_d_star__block_344 = path_d_star;
-      path_K__block_341 = path_K;
+      distance_ahead__block_351 = distance_ahead;
       vehicle_delta__block_341 = vehicle_delta;
-      vehicle_psi_dot__block_341 = vehicle_psi_dot;
+      need_more_path_input_data__block_341 = need_more_path_input_data;
       vehicle_delta_dot__block_341 = vehicle_delta_dot;
+      path_K__block_341 = path_K;
+      tracked_index__block_341 = tracked_index;
+      path_x__block_341 = path_x;
+      vehicle_psi_dot__block_341 = vehicle_psi_dot;
       s406__block_355 = s406;
-      s398__block_347 = s398;
-      s399__block_348 = s399;
-      head_index__block_349 = head_index;
       s396__block_345 = s396;
       s392__block_341 = s392;
       s397_minimal_read_position__block_346 = s397_minimal_read_position;
@@ -2725,14 +2733,6 @@ typedef CircularBuffer *CircularBufferPtr;
       elements_free_to_write__block_356 = elements_free_to_write;
       s408__block_357 = s408;
       velocity__block_358 = velocity;
-      need_more_path_input_data__block_341 = need_more_path_input_data;
-      distance_at_the_end_of_horizon__block_350 = distance_at_the_end_of_horizon;
-      read_position__block_341 = read_position;
-      path_y__block_341 = path_y;
-      path_x__block_341 = path_x;
-      vehicle_psi__block_341 = vehicle_psi;
-      path_d__block_341 = path_d;
-      distance_ahead__block_351 = distance_ahead;
     }
     // output signals of  calcResults_1
     struct Outputs_calcResults_1{
@@ -2759,44 +2759,44 @@ typedef CircularBuffer *CircularBufferPtr;
     };
     // input signals of calcResults_1
     struct Inputs_calcResults_1{
-      double Delta_l_r_dotdot;
-      bool input_sample_valid;
-      double Delta_l_r;
-      double psi0;
-      double y0;
-      double d0;
-      double velocity_;
-      double Delta_l_r_dot;
       double x0;
+      double Delta_l_r;
+      bool input_sample_valid;
+      double d0;
+      double Delta_l_r_dotdot;
+      double velocity_;
+      double y0;
+      double psi0;
+      double Delta_l_r_dot;
 
     };
     // wrapper function for calcResults_1
     Outputs_calcResults_1 calcResults_1__(Inputs_calcResults_1 inputs) {
       Outputs_calcResults_1 outputs;
 
-      calcResults_1(outputs.output_valid, outputs.need_more_path_input_data, outputs.distance_at_the_end_of_horizon, outputs.distance_ahead, outputs.head_index, outputs.read_position, outputs.elements_free_to_write, outputs.tracked_index, outputs.path_d_star, outputs.path_d, outputs.path_x, outputs.path_y, outputs.path_psi, outputs.path_K, outputs.vehicle_delta, outputs.vehicle_delta_dot, outputs.vehicle_psi, outputs.vehicle_psi_dot, outputs.velocity,   inputs.Delta_l_r_dotdot, inputs.input_sample_valid, inputs.Delta_l_r, inputs.psi0, inputs.y0, inputs.d0, inputs.velocity_, inputs.Delta_l_r_dot, inputs.x0);
+      calcResults_1(outputs.output_valid, outputs.need_more_path_input_data, outputs.distance_at_the_end_of_horizon, outputs.distance_ahead, outputs.head_index, outputs.read_position, outputs.elements_free_to_write, outputs.tracked_index, outputs.path_d_star, outputs.path_d, outputs.path_x, outputs.path_y, outputs.path_psi, outputs.path_K, outputs.vehicle_delta, outputs.vehicle_delta_dot, outputs.vehicle_psi, outputs.vehicle_psi_dot, outputs.velocity,   inputs.x0, inputs.Delta_l_r, inputs.input_sample_valid, inputs.d0, inputs.Delta_l_r_dotdot, inputs.velocity_, inputs.y0, inputs.psi0, inputs.Delta_l_r_dot);
 
       return outputs;
     }
     // all system inputs and outputs combined
     struct Inputs{
-      double Ts;
+      double x0;
       double psi_sample;
+      double Delta_l_r;
+      double wheelbase;
       double x_sample;
       bool input_sample_valid;
-      double Delta_l_r_dotdot;
-      double Delta_l_r;
-      double psi0;
-      double wheelbase;
-      double y0;
       double d0;
-      double K_sample;
-      double y_sample;
-      double d_sample;
-      double x0;
+      double Delta_l_r_dotdot;
       double velocity_;
+      double K_sample;
+      double y0;
+      double y_sample;
+      double psi0;
+      double Ts;
       double Delta_l_r_dot;
       bool async_input_data_valid;
+      double d_sample;
 
     };
     struct Outputs{
@@ -2828,11 +2828,11 @@ typedef CircularBuffer *CircularBufferPtr;
 
       }
       if (calculate_outputs==1) {
-        calcResults_1(outputs.output_valid, outputs.need_more_path_input_data, outputs.distance_at_the_end_of_horizon, outputs.distance_ahead, outputs.head_index, outputs.read_position, outputs.elements_free_to_write, outputs.tracked_index, outputs.path_d_star, outputs.path_d, outputs.path_x, outputs.path_y, outputs.path_psi, outputs.path_K, outputs.vehicle_delta, outputs.vehicle_delta_dot, outputs.vehicle_psi, outputs.vehicle_psi_dot, outputs.velocity,   inputs.Delta_l_r_dotdot, inputs.input_sample_valid, inputs.Delta_l_r, inputs.psi0, inputs.y0, inputs.d0, inputs.velocity_, inputs.Delta_l_r_dot, inputs.x0);
+        calcResults_1(outputs.output_valid, outputs.need_more_path_input_data, outputs.distance_at_the_end_of_horizon, outputs.distance_ahead, outputs.head_index, outputs.read_position, outputs.elements_free_to_write, outputs.tracked_index, outputs.path_d_star, outputs.path_d, outputs.path_x, outputs.path_y, outputs.path_psi, outputs.path_K, outputs.vehicle_delta, outputs.vehicle_delta_dot, outputs.vehicle_psi, outputs.vehicle_psi_dot, outputs.velocity,   inputs.x0, inputs.Delta_l_r, inputs.input_sample_valid, inputs.d0, inputs.Delta_l_r_dotdot, inputs.velocity_, inputs.y0, inputs.psi0, inputs.Delta_l_r_dot);
 
       }
       if (update_states) {
-        updateStates(inputs.Ts, inputs.psi_sample, inputs.x_sample, inputs.input_sample_valid, inputs.wheelbase, inputs.K_sample, inputs.y_sample, inputs.d_sample, inputs.velocity_, inputs.async_input_data_valid);
+        updateStates(inputs.psi_sample, inputs.x_sample, inputs.wheelbase, inputs.input_sample_valid, inputs.Ts, inputs.velocity_, inputs.K_sample, inputs.y_sample, inputs.d_sample, inputs.async_input_data_valid);
 
       }
 
@@ -2936,15 +2936,15 @@ static void mdlInitializeSizes(SimStruct *S)
     ssSetInputPortDataType(S, 18, SS_DOUBLE); // K_sample (double)
 
     // set direct feedthough (for input signals that are needed to compute the system outputs)
-    ssSetInputPortDirectFeedThrough(S, 5, 1); // Delta_l_r_dotdot
-    ssSetInputPortDirectFeedThrough(S, 13, 1); // input_sample_valid
-    ssSetInputPortDirectFeedThrough(S, 3, 1); // Delta_l_r
-    ssSetInputPortDirectFeedThrough(S, 9, 1); // psi0
-    ssSetInputPortDirectFeedThrough(S, 8, 1); // y0
-    ssSetInputPortDirectFeedThrough(S, 6, 1); // d0
-    ssSetInputPortDirectFeedThrough(S, 2, 1); // velocity_
-    ssSetInputPortDirectFeedThrough(S, 4, 1); // Delta_l_r_dot
     ssSetInputPortDirectFeedThrough(S, 7, 1); // x0
+    ssSetInputPortDirectFeedThrough(S, 3, 1); // Delta_l_r
+    ssSetInputPortDirectFeedThrough(S, 13, 1); // input_sample_valid
+    ssSetInputPortDirectFeedThrough(S, 6, 1); // d0
+    ssSetInputPortDirectFeedThrough(S, 5, 1); // Delta_l_r_dotdot
+    ssSetInputPortDirectFeedThrough(S, 2, 1); // velocity_
+    ssSetInputPortDirectFeedThrough(S, 8, 1); // y0
+    ssSetInputPortDirectFeedThrough(S, 9, 1); // psi0
+    ssSetInputPortDirectFeedThrough(S, 4, 1); // Delta_l_r_dot
 
     // number of output ports
     if (!ssSetNumOutputPorts(S, 19)) return;
@@ -3038,15 +3038,15 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     simulation *c = (simulation *) ssGetPWork(S)[0];
     
     // inputs
-    InputRealPtrsType uPtrs5 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,5);
-    InputBooleanPtrsType uPtrs13 = (InputBooleanPtrsType) ssGetInputPortSignalPtrs(S,13);
-    InputRealPtrsType uPtrs3 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,3);
-    InputRealPtrsType uPtrs9 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,9);
-    InputRealPtrsType uPtrs8 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,8);
-    InputRealPtrsType uPtrs6 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,6);
-    InputRealPtrsType uPtrs2 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,2);
-    InputRealPtrsType uPtrs4 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,4);
     InputRealPtrsType uPtrs7 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,7);
+    InputRealPtrsType uPtrs3 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,3);
+    InputBooleanPtrsType uPtrs13 = (InputBooleanPtrsType) ssGetInputPortSignalPtrs(S,13);
+    InputRealPtrsType uPtrs6 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,6);
+    InputRealPtrsType uPtrs5 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,5);
+    InputRealPtrsType uPtrs2 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,2);
+    InputRealPtrsType uPtrs8 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,8);
+    InputRealPtrsType uPtrs9 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,9);
+    InputRealPtrsType uPtrs4 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,4);
 
     
     // outputs
@@ -3075,15 +3075,15 @@ static void mdlOutputs(SimStruct *S, int_T tid)
     simulation::Outputs outputs;
 
     
-    inputs.Delta_l_r_dotdot = *uPtrs5[0];
-    inputs.input_sample_valid = *uPtrs13[0];
-    inputs.Delta_l_r = *uPtrs3[0];
-    inputs.psi0 = *uPtrs9[0];
-    inputs.y0 = *uPtrs8[0];
-    inputs.d0 = *uPtrs6[0];
-    inputs.velocity_ = *uPtrs2[0];
-    inputs.Delta_l_r_dot = *uPtrs4[0];
     inputs.x0 = *uPtrs7[0];
+    inputs.Delta_l_r = *uPtrs3[0];
+    inputs.input_sample_valid = *uPtrs13[0];
+    inputs.d0 = *uPtrs6[0];
+    inputs.Delta_l_r_dotdot = *uPtrs5[0];
+    inputs.velocity_ = *uPtrs2[0];
+    inputs.y0 = *uPtrs8[0];
+    inputs.psi0 = *uPtrs9[0];
+    inputs.Delta_l_r_dot = *uPtrs4[0];
 
 
     // compute the system outputs
@@ -3123,29 +3123,29 @@ static void mdlUpdate(SimStruct *S, int_T tid)
     simulation::Inputs inputs;
     simulation::Outputs outputs;
 
-    InputRealPtrsType uPtrs0 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,0);
     InputRealPtrsType uPtrs17 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,17);
     InputRealPtrsType uPtrs15 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,15);
-    InputBooleanPtrsType uPtrs13 = (InputBooleanPtrsType) ssGetInputPortSignalPtrs(S,13);
     InputRealPtrsType uPtrs1 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,1);
+    InputBooleanPtrsType uPtrs13 = (InputBooleanPtrsType) ssGetInputPortSignalPtrs(S,13);
+    InputRealPtrsType uPtrs0 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,0);
+    InputRealPtrsType uPtrs2 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,2);
     InputRealPtrsType uPtrs18 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,18);
     InputRealPtrsType uPtrs16 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,16);
     InputRealPtrsType uPtrs14 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,14);
-    InputRealPtrsType uPtrs2 = (InputRealPtrsType) ssGetInputPortSignalPtrs(S,2);
     InputBooleanPtrsType uPtrs12 = (InputBooleanPtrsType) ssGetInputPortSignalPtrs(S,12);
 
 
     UNUSED_ARG(tid); /* not used in single tasking mode */
     
-    inputs.Ts = *uPtrs0[0];
     inputs.psi_sample = *uPtrs17[0];
     inputs.x_sample = *uPtrs15[0];
-    inputs.input_sample_valid = *uPtrs13[0];
     inputs.wheelbase = *uPtrs1[0];
+    inputs.input_sample_valid = *uPtrs13[0];
+    inputs.Ts = *uPtrs0[0];
+    inputs.velocity_ = *uPtrs2[0];
     inputs.K_sample = *uPtrs18[0];
     inputs.y_sample = *uPtrs16[0];
     inputs.d_sample = *uPtrs14[0];
-    inputs.velocity_ = *uPtrs2[0];
     inputs.async_input_data_valid = *uPtrs12[0];
 
 

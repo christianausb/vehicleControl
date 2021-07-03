@@ -378,15 +378,15 @@ def path_following_controller_P(
 
 
 def path_lateral_modification2(
-        Ts, 
-        wheelbase, 
         input_path, 
+        par,
+        Ts,
+        wheelbase, 
         velocity, 
         Delta_l_r, 
         Delta_l_r_dot, 
         Delta_l_r_dotdot, 
-        d0, x0, y0, psi0, delta0, delta_dot0,
-        par={}
+        d0, x0, y0, psi0, delta0, delta_dot0
     ):
 
     """
@@ -395,6 +395,8 @@ def path_lateral_modification2(
 
         Technically this combines a controller that causes an simulated vehicle to follows 
         the input path with defined lateral modifications. 
+
+        Note: this implementation is meant as a callback routine for async_path_data_handler()
     """
     # create placeholders for the plant output signals
     x       = dy.signal()
@@ -407,10 +409,10 @@ def path_lateral_modification2(
         results = path_following_controller_P(
             input_path,
 
-            x, y, psi, 
-            velocity, 
+            x, y, psi,
+            velocity,
 
-            Delta_l_r        = Delta_l_r, 
+            Delta_l_r        = Delta_l_r,
             Delta_l_r_dot    = Delta_l_r_dot,
             Delta_l_r_dotdot = Delta_l_r_dotdot,
 
