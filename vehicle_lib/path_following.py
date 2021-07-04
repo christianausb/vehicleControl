@@ -39,10 +39,10 @@ def compute_nominal_steering_from_curvature( Ts : float, l_r : float, v, K_r ):
 
 def compute_path_orientation_from_curvature( Ts : float, velocity, psi_rr, K_r, L ):
     """
-        compute the noise-reduced path orientation Psi_r from curvature
+        Compute the noise-reduced path orientation Psi_r from curvature
 
         Ts       - the sampling time
-        velocity - the driving velocity 
+        velocity - the driving velocity projected onto the path (d/dt d_star) 
         psi_rr   - noisy (e.g., due to sampling) path orientation
         K_r      - path curvature
         L        - gain for fusion using internal observer
@@ -142,8 +142,6 @@ def path_following(
     # structure for output signals
     results = dy.structure()
 
-
-
     # track the evolution of the closest point on the path to the vehicles position
     minimal_number_of_path_samples_to_start = 5 # depends on tracker(); should be at least 2
     with dy.sub_if( index_head > minimal_number_of_path_samples_to_start, subsystem_name='tracker' ) as system:
@@ -151,7 +149,6 @@ def path_following(
         tracking_results = tracker(path, x, y)
 
         system.set_outputs( tracking_results.to_list() )
-
     tracking_results.replace_signals( system.outputs )
 
 
@@ -159,8 +156,8 @@ def path_following(
     need_more_path_input_data = tracking_results['reached_the_end_of_currently_available_path_data']
 
 
-    # position_on_path_found = dy.boolean(True)
-
+    # in case the lookup was successful, run further operations on the path
+    # to generate references and run the controller.
     with dy.sub_if( output_valid, prevent_output_computation=False, subsystem_name='controller') as system:
 
         # ps - path sample
@@ -237,10 +234,14 @@ def path_following(
         results['v_star']        = v_star         # the current velocity of the closest point on the reference path
         results['d_star']        = ps['d_star']   # the current distance parameter of the closest point on the reference path
         results['psi_r']         = psi_r          # the current path-tangent orientation angle in the closest point on the reference path
+        results['K_r']           = ps['K_r']      # the curvature
         results['psi_r_dot']     = psi_r_dot      # the time derivative of psi_r
-        results['Delta_l']       = ps['Delta_l']  # the distance to the closest point on the reference path
+
         results['Delta_u']       = Delta_u        # small steering delta
         results['delta']         = delta          # the requested steering angle / the control variable 
+
+        results['Delta_l']       = ps['Delta_l']  # the distance to the closest point on the reference path
+        results['Delta_l_dot']   = dy.float64(math.nan)  # d/dt Delta_l   TODO: implement
 
 
         # results['line_tracking_internals']  = ps['internals']
@@ -446,7 +447,7 @@ def path_lateral_modification2(
 
 
     #
-    # The model of the vehicle including a disturbance
+    # The model of the vehicle
     #
 
     with dy.sub_if( results['output_valid'], prevent_output_computation=False, subsystem_name='simulation_model') as system:
