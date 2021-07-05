@@ -117,7 +117,6 @@ def path_tracking(
         'Delta_l'       : results['Delta_l'],
         'Delta_l_dot'   : results['Delta_l_dot'],
 
-
         'output_valid'              : output_valid,
         'need_more_path_input_data' : need_more_path_input_data,
 
@@ -206,12 +205,18 @@ def compile_path_tracker(
 
     # data sampled at the closest point on path
     dy.append_output(output_signals['tracked_index'],                  'tracked_index')
-    dy.append_output(output_signals['d_star'],                         'path_d_star')
+    dy.append_output(output_signals['d_star'],                         'd_star')
+    dy.append_output(output_signals['v_star'],                         'v_star')
+
     dy.append_output(output_signals['x_r'],          'x_r')
     dy.append_output(output_signals['y_r'],          'y_r')
     dy.append_output(output_signals['psi_r'],        'psi_r')
     dy.append_output(output_signals['K_r'],          'K_r')
 
+    dy.append_output(output_signals['psi_r_dot'],    'psi_r_dot')
+
+    dy.append_output(output_signals['Delta_l'],      'Delta_l')
+    dy.append_output(output_signals['Delta_l_dot'],  'Delta_l_dot')
 
 
     # generate code
