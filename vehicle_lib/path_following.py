@@ -51,6 +51,10 @@ def compute_path_orientation_from_curvature( Ts : float, velocity, psi_rr, K_r, 
         
         psi_r_reconst     - the noise-reduced path orientation (reconstructed)
         psi_r_reconst_dot - the time derivative                (reconstructed)
+
+        TODO: There might be potential for improvement by replacing Euler forward
+              integration with a higher-oder approach. This, however requires to sample
+              two curvature values from the path.
     """
 
     eps = dy.signal()
@@ -241,7 +245,7 @@ def path_following(
         results['delta']         = delta          # the requested steering angle / the control variable 
 
         results['Delta_l']       = ps['Delta_l']  # the distance to the closest point on the reference path
-        results['Delta_l_dot']   = dy.float64(math.nan)  # d/dt Delta_l   TODO: implement
+        results['Delta_l_dot']   = dy.float64(0.0)  # d/dt Delta_l   TODO: implement
 
 
         # results['line_tracking_internals']  = ps['internals']

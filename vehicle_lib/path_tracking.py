@@ -87,7 +87,7 @@ def path_tracking(
         results['K_r']           = ps['K_r']      # the curvature
 
         results['Delta_l']       = ps['Delta_l']  # the distance to the closest point on the reference path
-        results['Delta_l_dot']   = dy.float64(math.nan)  # d/dt Delta_l   TODO: implement
+        results['Delta_l_dot']   = dy.float64(0.0)  # d/dt Delta_l   TODO: implement
 
 
 
