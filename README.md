@@ -6,7 +6,7 @@
 
 Tutorial on: Vehicle path following and control
 
-<img width="350" alt="Bildschirmfoto 2022-03-26 um 15 40 41" src="https://user-images.githubusercontent.com/4620523/160244474-e3a5005c-a445-4bdd-86d9-21cc6ecdd610.png"><img width="500" alt="Bildschirmfoto 2022-03-26 um 15 41 41" src="https://user-images.githubusercontent.com/4620523/160244501-a0db5bda-5c9b-4d05-bf5e-419f2cf07a92.png">
+<img width="350" alt="Bildschirmfoto 2022-03-26 um 15 40 41" src="https://user-images.githubusercontent.com/4620523/160244474-e3a5005c-a445-4bdd-86d9-21cc6ecdd610.png"><img width="700" alt="Bildschirmfoto 2022-03-26 um 15 41 41" src="https://user-images.githubusercontent.com/4620523/160244501-a0db5bda-5c9b-4d05-bf5e-419f2cf07a92.png">
 
 
 
