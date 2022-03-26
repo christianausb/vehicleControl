@@ -6,6 +6,10 @@
 
 Tutorial on: Vehicle path following and control
 
+<img width="350" alt="Bildschirmfoto 2022-03-26 um 15 40 41" src="https://user-images.githubusercontent.com/4620523/160244474-e3a5005c-a445-4bdd-86d9-21cc6ecdd610.png"><img width="500" alt="Bildschirmfoto 2022-03-26 um 15 41 41" src="https://user-images.githubusercontent.com/4620523/160244501-a0db5bda-5c9b-4d05-bf5e-419f2cf07a92.png">
+
+
+
 This project considers example implementations and demonstrations for several aspects of car-like vehicle control, motion/path planning, e.g., for autonomous driving purposes. The examples are implemented using model-based programming for dynamic systems in Python [Openrtdynamics](https://github.com/OpenRTDynamics/openrtdynamics2). Some modules are also exported to Simulink S-functions via automatic code generation.
 
 Some theoretical details are described in [Path Tracking Control for Urban Autonomous Driving, Klauer et al., IFAC-WC 2020](https://www.sciencedirect.com/science/article/pii/S2405896320333218).
@@ -30,7 +34,7 @@ Topics include (to be further defined)
 - Safety Functions
 - Trailers
 
-Further, this projects implements a path tracking module that can be used to track the projection of the vehicle position on a given path (the paths are dynamically extensible to enable endless driving). It allows to sample data like position, heading, and curvature from the path. Further it allows to calculate the lateral distance to the path. This module is available (via generated c++ S-functions from Python) for controller design or simulation in Matlab/Simulink. You might consider the notebook [on code generation](https://github.com/christianausb/vehicleControl/blob/main/generate_simulink_blocks.ipynb) for more information. Simulink examples are given in the folder  
+Further, this projects implements a path tracking module that can be used to track the projection of the vehicle position on a given path (the paths are dynamically extensible to enable endless driving). It allows to sample data like position, heading, and curvature from the path. Further, it allows to calculate the lateral distance to the path. This module is available (via generated c++ S-functions from Python) for controller design or simulation in Matlab/Simulink. You might consider the notebook [on code generation](https://github.com/christianausb/vehicleControl/blob/main/generate_simulink_blocks.ipynb) for more information. Simulink examples are given in the folder  
 [sfunctions](https://github.com/christianausb/vehicleControl/blob/main/sfunctions).
 
 Example tracks
