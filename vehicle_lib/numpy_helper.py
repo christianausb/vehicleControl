@@ -58,3 +58,13 @@ def np_normalize_angle_mpi_to_pi(angle : np.array) -> np.array:
 
     return angle_out
 
+def rotate_vector_2d(alpha, xy):
+    # test
+    # rotmat2d( alpha = np.deg2rad(-45), xy=np.array([1.0, 0.0]) )
+    xy_rotated = np.array([ 
+            [ np.cos(alpha), -np.sin(alpha) ],
+            [ np.sin(alpha),  np.cos(alpha) ]
+        ]) @ xy
+    
+    return xy_rotated
+
