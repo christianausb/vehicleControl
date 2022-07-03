@@ -41,3 +41,20 @@ def make_time(Ts, seq):
     # test: np.diff(make_time(Ts, Delta_l_r_profile)) == Ts
     
     return time_seq
+
+def np_normalize_angle_mpi_to_pi(angle : np.array) -> np.array:
+    
+    # test: should be [10.0, -80.0, 178.0, -178.0]
+    # a = np_normalize_angle_mpi_to_pi( np.deg2rad( np.array([  10.0, -80.0, -182, 182 ]) ) )
+    # np.rad2deg(a).tolist()    
+
+    angle_out = angle.copy()
+    
+    I_too_small = np.where( angle < np.deg2rad(-180) )[0]
+    angle_out[I_too_small] = angle[I_too_small] + np.deg2rad(360)
+    
+    I_too_big = np.where( angle > np.deg2rad(180) )[0]
+    angle_out[I_too_big] = angle[I_too_big] - np.deg2rad(360)
+
+    return angle_out
+
