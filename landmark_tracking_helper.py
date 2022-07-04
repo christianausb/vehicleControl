@@ -7,6 +7,8 @@ from vehicle_lib.numpy_helper import np_normalize_angle_mpi_to_pi, rotate_vector
 
 
 def simulate_odometry(x_y_psi):
+    pdf_odometry_measurements = pd.DataFrame()
+
     # simulate odometry
     x_y_psi_delta = np.diff( x_y_psi, axis=0 )
     d_delta   = np.sqrt( x_y_psi_delta[:,0]**2 + x_y_psi_delta[:,1]**2 )
@@ -14,11 +16,17 @@ def simulate_odometry(x_y_psi):
 
     d_psi_delta = np.array([ d_delta, psi_delta  ]).transpose()  # aka odemetry
     
-    return x_y_psi_delta, d_psi_delta
+    
+    pdf_odometry_measurements["d_delta"] = d_delta
+    pdf_odometry_measurements["psi_delta"] = psi_delta
+    
+    return pdf_odometry_measurements, d_psi_delta
 
 
 def simulate_odometry_and_GPS(raw_trace, trace, number_of_samples=100):
+    pdf_gps_measurements = pd.DataFrame()
 
+    
     n_raw = len(raw_trace['X'])
 
     # perform a subsampling of the ground truth to reduce the data and to 
@@ -39,7 +47,7 @@ def simulate_odometry_and_GPS(raw_trace, trace, number_of_samples=100):
     trace['odometry_noise'] = [ 0.1, 0.0001, 0.1 ]
     
     # compute odometry
-    trace['x_y_psi_delta'], trace['odometry'] = simulate_odometry( trace['x_y_psi'] )
+    pdf_odometry_measurements, trace['odometry'] = simulate_odometry( trace['x_y_psi'] )
 
     #
     # simulate GPS
@@ -51,7 +59,19 @@ def simulate_odometry_and_GPS(raw_trace, trace, number_of_samples=100):
     gps_subsample_indices = np.linspace( 1, len(x_y_psi)-1, 5, dtype=np.int32 )
     
     trace['gps_subsample_indices'] = gps_subsample_indices
-    trace['x_y_psi_GPS'] = x_y_psi[gps_subsample_indices] # TODO: add measurement noise  
+    x_y_psi_GPS = x_y_psi[gps_subsample_indices] # TODO: add measurement noise  
+    
+    trace['x_y_psi_GPS'] = x_y_psi_GPS
+    
+    
+    pdf_gps_measurements["x"]   = x_y_psi_GPS[:,0]
+    pdf_gps_measurements["y"]   = x_y_psi_GPS[:,1]
+    pdf_gps_measurements["psi"] = x_y_psi_GPS[:,2]
+    pdf_gps_measurements["index_in_trace"] = gps_subsample_indices
+    
+    
+    return pdf_odometry_measurements, pdf_gps_measurements
+
 
 def sense_landmark_on_given_trace( 
     x_y_psi, landmark_xy, 
@@ -86,7 +106,14 @@ def sense_landmark_on_given_trace(
 
 
 
-def plot_overview(trace, landmarks_observations_by_id, pdf_landmarks_bearing, landmarks_to_show, figsize=(12, 7)):
+def plot_overview(
+    trace, 
+    pdf_gps_measurements, 
+    landmarks_observations_by_id, 
+    pdf_landmarks_bearing, 
+    landmarks_to_show, 
+    figsize=(12, 7)
+):
 
     def compute_positions_from_which_the_landmark_is_visible(pdf_landmarks_bearing, x_y_psi, landmark_id_to_show):
         
@@ -120,14 +147,13 @@ def plot_overview(trace, landmarks_observations_by_id, pdf_landmarks_bearing, la
             color=color, label="visibility of landmark "+str(landmark_id_to_show) 
         )        
         
-    
-    pdf_landmarks_bearing = trace['pdf_landmarks_bearing']
+
+    # get ground truth vehicle trace
     x_y_psi               = trace['x_y_psi']
-    x_y_psi_GPS           = trace['x_y_psi_GPS']
 
     plt.figure(figsize=figsize, dpi=100)
-    plt.plot( x_y_psi[ :,0 ], x_y_psi[ :,1 ], 'k', color="lightgrey", label="vehicle trace" )
-    plt.plot( x_y_psi_GPS[ :,0 ], x_y_psi_GPS[ :,1 ], 'o', color="grey", markersize=12, label="GPS sample" )
+    plt.plot( x_y_psi[ :,0 ], x_y_psi[ :,1 ], 'k', color="lightgrey", label="vehicle trace" )    
+    plt.plot( pdf_gps_measurements.x, pdf_gps_measurements.y, 'o', color="grey", markersize=12, label="GPS sample" )
 
     for lshow in landmarks_to_show:
         landmark_id_to_show, color, beam_color, marker_style = lshow[0], lshow[1], lshow[2], lshow[3]
