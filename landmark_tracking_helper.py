@@ -20,13 +20,16 @@ def simulate_odometry(x_y_psi):
     pdf_odometry_measurements["d_delta"] = d_delta
     pdf_odometry_measurements["psi_delta"] = psi_delta
     
-    return pdf_odometry_measurements, d_psi_delta
+    # define measurement noise parameters
+    pdf_odometry_measurements["d_sigma"] = 0.1
+    pdf_odometry_measurements["psi_sigma"] = 0.1
+    
+    return pdf_odometry_measurements
 
 
-def simulate_odometry_and_GPS(raw_trace, trace, number_of_samples=100):
+def simulate_odometry_and_GPS(raw_trace, number_of_samples=100):
     pdf_gps_measurements = pd.DataFrame()
 
-    
     n_raw = len(raw_trace['X'])
 
     # perform a subsampling of the ground truth to reduce the data and to 
@@ -36,55 +39,60 @@ def simulate_odometry_and_GPS(raw_trace, trace, number_of_samples=100):
     x_y_psi__ = np.array( [ raw_trace['X'], raw_trace['Y'], raw_trace['PSI'] ] ).transpose()
     x_y_psi = x_y_psi__[ I_subsample_raw, : ]
 
-    # pass-through the (sub-sampled) ground truth (used for plotting verification purposes not to solve the SLAM problem)
-    trace['x_y_psi'] = x_y_psi
+    # pass-through the (sub-sampled) ground truth (used for plotting verification purposes not to solve the SLAM problem)    
+    pdf_vehicle_trace_gt = pd.DataFrame()
+    pdf_vehicle_trace_gt["x"]   = x_y_psi[:,0]
+    pdf_vehicle_trace_gt["y"]   = x_y_psi[:,1]
+    pdf_vehicle_trace_gt["psi"] = x_y_psi[:,2]
 
     #
     # simulate odometry
     #
-
-    # define measurement noise parameters
-    trace['odometry_noise'] = [ 0.1, 0.0001, 0.1 ]
     
     # compute odometry
-    pdf_odometry_measurements, trace['odometry'] = simulate_odometry( trace['x_y_psi'] )
+    pdf_odometry_measurements = simulate_odometry( x_y_psi )
+    
+    
 
     #
     # simulate GPS
     #
 
-    trace['x_y_psi_noise']  = [ 0.2, 0.2, 1000 ]
-    
     # perform a subsampling of the ground truth to model the reduced sampling rate of GPS.
     gps_subsample_indices = np.linspace( 1, len(x_y_psi)-1, 5, dtype=np.int32 )
     
-    trace['gps_subsample_indices'] = gps_subsample_indices
+    #trace['gps_subsample_indices'] = gps_subsample_indices
     x_y_psi_GPS = x_y_psi[gps_subsample_indices] # TODO: add measurement noise  
     
-    trace['x_y_psi_GPS'] = x_y_psi_GPS
+    #trace['x_y_psi_GPS'] = x_y_psi_GPS
     
     
     pdf_gps_measurements["x"]   = x_y_psi_GPS[:,0]
     pdf_gps_measurements["y"]   = x_y_psi_GPS[:,1]
     pdf_gps_measurements["psi"] = x_y_psi_GPS[:,2]
     pdf_gps_measurements["index_in_trace"] = gps_subsample_indices
+
+    # define measurement noise parameters
+    pdf_gps_measurements["x_sigma"] = 0.2
+    pdf_gps_measurements["y_sigma"] = 0.2
+    pdf_gps_measurements["psi_sigma"] = 1000
     
-    
-    return pdf_odometry_measurements, pdf_gps_measurements
+    return pdf_odometry_measurements, pdf_gps_measurements, pdf_vehicle_trace_gt
 
 
 def sense_landmark_on_given_trace( 
-    x_y_psi, landmark_xy, 
+    pdf_vehicle_trace_gt,
+    landmark_xy, 
     field_of_view_angle=np.deg2rad(80), 
     field_of_view_max_distance=8 
 ):
     
     # simulate landmark detecting sensor
-    delta_x = landmark_xy[0] - x_y_psi[ :,0 ]
-    delta_y = landmark_xy[1] - x_y_psi[ :,1 ]
+    delta_x = landmark_xy[0] - pdf_vehicle_trace_gt.x.to_numpy()
+    delta_y = landmark_xy[1] - pdf_vehicle_trace_gt.y.to_numpy()
 
     bearing_angle    = np_normalize_angle_mpi_to_pi(
-        np.arctan2( delta_y, delta_x ) - x_y_psi[ :,2 ]
+        np.arctan2( delta_y, delta_x ) - pdf_vehicle_trace_gt.psi.to_numpy()
     )
     bearing_distance = np.sqrt( delta_x**2 + delta_y**2 )
 
@@ -107,7 +115,7 @@ def sense_landmark_on_given_trace(
 
 
 def plot_overview(
-    trace, 
+    pdf_vehicle_trace_gt, 
     pdf_gps_measurements, 
     landmarks_observations_by_id, 
     pdf_landmarks_bearing, 
@@ -149,10 +157,14 @@ def plot_overview(
         
 
     # get ground truth vehicle trace
-    x_y_psi               = trace['x_y_psi']
+    x_y_psi = np.array([ 
+        pdf_vehicle_trace_gt.x.to_numpy(), 
+        pdf_vehicle_trace_gt.y.to_numpy(),
+        pdf_vehicle_trace_gt.psi.to_numpy(),
+    ]).transpose()
 
     plt.figure(figsize=figsize, dpi=100)
-    plt.plot( x_y_psi[ :,0 ], x_y_psi[ :,1 ], 'k', color="lightgrey", label="vehicle trace" )    
+    plt.plot( pdf_vehicle_trace_gt.x, pdf_vehicle_trace_gt.y, 'k', color="lightgrey", label="vehicle trace" )    
     plt.plot( pdf_gps_measurements.x, pdf_gps_measurements.y, 'o', color="grey", markersize=12, label="GPS sample" )
 
     for lshow in landmarks_to_show:
